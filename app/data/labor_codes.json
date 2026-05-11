@@ -1,0 +1,108 @@
+{
+  "SA": {
+    "country_name": "Saudi Arabia",
+    "instrument": "Labor Law (Royal Decree M/51, 2005, with 2017 amendments)",
+    "statutes": {
+      "passport_custody": {
+        "citation": "KSA Labor Law Art. 6 + MoHRSD Decision 166/2017",
+        "rule": "Employers may NOT retain workers' passports under any circumstances. Workers must keep their own identity documents.",
+        "since": "2017",
+        "enforcement": "moderate — explicit prohibition but reports of non-compliance persist"
+      },
+      "working_hours": {
+        "citation": "KSA Labor Law Art. 98",
+        "rule": "Standard working hours: 8 hours/day or 48 hours/week. During Ramadan: 6 hours/day or 36 hours/week for Muslim workers.",
+        "note": "Domestic workers historically excluded; partial coverage since 2013."
+      },
+      "wage_deductions": {
+        "citation": "KSA Labor Law Art. 92",
+        "rule": "Deductions from wages limited to specific authorized purposes. No open-ended employer-discretion deductions permitted.",
+        "max_aggregate_deduction_pct": 50
+      },
+      "rest_days": {
+        "citation": "KSA Labor Law Art. 104",
+        "rule": "At least one weekly rest day (Friday by default).",
+        "note": "Domestic workers under separate regulation 310/1434H — weaker enforcement."
+      },
+      "recruitment_fees": {
+        "citation": "No explicit ban; subject to MoHRSD circulars",
+        "rule": "Worker-paid recruitment fees not explicitly prohibited under KSA law.",
+        "note": "KSA has not ratified ILO C181 (Private Employment Agencies)."
+      },
+      "termination_notice": {
+        "citation": "KSA Labor Law Art. 75-77",
+        "rule": "Notice period required unless gross breach. Domestic-worker provisions weaker."
+      }
+    }
+  },
+
+  "MY": {
+    "country_name": "Malaysia",
+    "instrument": "Employment Act 1955 (2022 consolidated amendments)",
+    "statutes": {
+      "passport_custody": {
+        "citation": "Anti-Trafficking in Persons and Anti-Smuggling of Migrants Act 2007 + MoHR Directive",
+        "rule": "Employer retention of worker passports constitutes a trafficking offence indicator.",
+        "since": "2007"
+      },
+      "working_hours": {
+        "citation": "Employment Act 1955 s.60A (2022 amendments)",
+        "rule": "Maximum 45 hours per week. Maximum 8 hours per day."
+      },
+      "wage_deductions": {
+        "citation": "Employment Act 1955 s.24",
+        "rule": "Deductions restricted to specific lawful categories (overpayment, advances, court orders). Total deduction capped at 50% of wages."
+      },
+      "rest_days": {
+        "citation": "Employment Act 1955 s.59",
+        "rule": "At least one rest day per week."
+      },
+      "recruitment_fees": {
+        "citation": "Workers' Minimum Standards of Housing and Amenities Act + Employment (Recruitment Fees) Regulation",
+        "rule": "Recruitment fees borne by employer for foreign workers under Zero Cost Recruitment policy.",
+        "since": "2018"
+      }
+    }
+  },
+
+  "SG": {
+    "country_name": "Singapore",
+    "instrument": "Employment of Foreign Manpower Act + Employment Act",
+    "statutes": {
+      "passport_custody": {
+        "citation": "Employment of Foreign Manpower Act 1990",
+        "rule": "Employers must not retain workers' passports."
+      },
+      "working_hours": {
+        "citation": "Employment Act Pt IV",
+        "rule": "Maximum 44 hours per week for covered employees."
+      }
+    }
+  },
+
+  "HK": {
+    "country_name": "Hong Kong SAR",
+    "instrument": "Employment Ordinance (Cap 57)",
+    "statutes": {
+      "passport_custody": {
+        "citation": "Immigration Department guidance + EOC",
+        "rule": "Employer must return passport; retention without justification unlawful."
+      }
+    }
+  },
+
+  "AE": {
+    "country_name": "United Arab Emirates",
+    "instrument": "Federal Decree-Law No. 33 of 2021",
+    "statutes": {
+      "passport_custody": {
+        "citation": "Federal Decree-Law 33/2021 Art. 13(2)",
+        "rule": "Employer may not retain worker passport. Violations punishable."
+      },
+      "working_hours": {
+        "citation": "Federal Decree-Law 33/2021 Art. 17",
+        "rule": "Maximum 8 hours/day, 48 hours/week."
+      }
+    }
+  }
+}

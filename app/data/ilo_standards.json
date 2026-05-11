@@ -1,0 +1,78 @@
+{
+  "C97": {
+    "name": "Migration for Employment Convention (Revised)",
+    "year": 1949,
+    "key_principles": [
+      "Equal treatment of migrant workers in respect of remuneration, hours, holidays, social security.",
+      "Provision of free services for migrant workers including assistance with information."
+    ]
+  },
+  "C143": {
+    "name": "Migrant Workers (Supplementary Provisions) Convention",
+    "year": 1975,
+    "key_principles": [
+      "Suppression of clandestine movements and illegal employment of migrants.",
+      "Equality of opportunity and treatment for legally resident migrant workers."
+    ]
+  },
+  "C181": {
+    "name": "Private Employment Agencies Convention",
+    "year": 1997,
+    "key_principles": [
+      "Private employment agencies shall not charge any fees or costs to workers, directly or indirectly.",
+      "Protection of workers using private employment agencies."
+    ],
+    "ratification_status_destinations": {
+      "SA": "not ratified",
+      "MY": "not ratified",
+      "SG": "not ratified",
+      "HK": "not ratified",
+      "AE": "not ratified"
+    }
+  },
+  "C189": {
+    "name": "Domestic Workers Convention",
+    "year": 2011,
+    "key_principles": [
+      "Equal treatment of domestic workers in working hours, weekly rest, paid annual leave.",
+      "At least 24 consecutive hours of weekly rest.",
+      "Protection from abuse, harassment, and violence.",
+      "Right to keep personal documents in one's possession.",
+      "Information on terms and conditions of employment in a language the worker understands."
+    ],
+    "ratification_status_destinations": {
+      "SA": "not ratified",
+      "MY": "not ratified",
+      "SG": "not ratified",
+      "HK": "not ratified",
+      "AE": "not ratified"
+    }
+  },
+  "C190": {
+    "name": "Violence and Harassment Convention",
+    "year": 2019,
+    "key_principles": [
+      "Right to a world of work free from violence and harassment, including gender-based violence."
+    ]
+  },
+  "fair_recruitment_initiative": {
+    "name": "ILO Fair Recruitment Initiative — General Principles and Operational Guidelines",
+    "year": 2019,
+    "key_principles": [
+      "No recruitment fees or related costs should be charged to workers.",
+      "Workers must have written employment contracts in a language they understand before departure.",
+      "Workers retain freedom of movement and right to terminate employment."
+    ]
+  },
+  "asean_standard_contract": {
+    "name": "ASEAN Rights-Based Standard Employment Contract (research compilation)",
+    "year": 2020,
+    "key_principles": [
+      "Employer bears all recruitment-related costs.",
+      "Worker keeps own identity documents.",
+      "Defined working hours and at least one weekly rest day.",
+      "Wages paid on time, in full, directly to the worker.",
+      "Right to terminate without loss of repatriation."
+    ]
+  }
+}

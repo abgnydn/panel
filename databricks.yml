@@ -1,0 +1,63 @@
+# Databricks Asset Bundle config for Panel
+# Deploys: Streamlit app + ingestion job + agent endpoints
+# Docs: https://docs.databricks.com/aws/en/dev-tools/bundles/
+
+bundle:
+  name: panel
+
+variables:
+  catalog:
+    description: Unity Catalog to use for Panel tables
+    default: panel_dev
+  schema:
+    description: Schema name within the catalog
+    default: main
+
+resources:
+  apps:
+    panel_app:
+      name: panel-app
+      description: "Panel — multi-agent rights advisor for APJ migrant workers"
+      source_code_path: ./app
+      resources:
+        - name: lakebase
+          description: "Lakebase Postgres instance for case archive + session memory"
+          database:
+            instance_name: panel-lakebase
+        - name: serving-endpoint-moderator
+          description: "Agent Bricks moderator endpoint"
+          serving_endpoint:
+            name: panel-moderator
+
+  jobs:
+    ingest_corpora:
+      name: panel-ingest-corpora
+      description: "Ingest ILO + ASEAN + labor-code corpora into Delta tables"
+      tasks:
+        - task_key: ingest_ilo_papers
+          notebook_task:
+            notebook_path: ../data/ingest_ilo.py
+        - task_key: ingest_labor_codes
+          notebook_task:
+            notebook_path: ../data/ingest_labor_codes.py
+          depends_on:
+            - task_key: ingest_ilo_papers
+        - task_key: seed_case_archive
+          notebook_task:
+            notebook_path: ../data/seed_case_archive.py
+          depends_on:
+            - task_key: ingest_labor_codes
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: ${DATABRICKS_HOST}
+
+  prod:
+    mode: production
+    workspace:
+      host: ${DATABRICKS_HOST}
+    run_as:
+      service_principal_name: ${PANEL_SP}

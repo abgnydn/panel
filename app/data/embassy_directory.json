@@ -1,0 +1,61 @@
+[
+  {
+    "country_of_origin": "PH",
+    "located_in_country": "SA",
+    "name": "Philippine Embassy Riyadh — POLO 24h hotline",
+    "phone": "+966 11 488 0888",
+    "whatsapp": "+966 50 230 9388",
+    "email": "polo_riyadh@dole.gov.ph",
+    "is_24h_hotline": true,
+    "languages": ["en", "tl"]
+  },
+  {
+    "country_of_origin": "PH",
+    "located_in_country": "SA",
+    "name": "Philippine Consulate Jeddah — POLO",
+    "phone": "+966 12 660 0263",
+    "whatsapp": "+966 56 996 6810",
+    "is_24h_hotline": true,
+    "languages": ["en", "tl"]
+  },
+  {
+    "country_of_origin": "PH",
+    "located_in_country": "PH",
+    "name": "DFA OFW Assistance (Manila)",
+    "phone": "1348",
+    "languages": ["en", "tl"]
+  },
+  {
+    "country_of_origin": "ID",
+    "located_in_country": "MY",
+    "name": "Embassy of Indonesia Kuala Lumpur — Citizen Protection",
+    "phone": "+603 2116 4000",
+    "whatsapp": "+60 16 222 9442",
+    "email": "kbri.kualalumpur@kemlu.go.id",
+    "is_24h_hotline": true,
+    "languages": ["en", "id"]
+  },
+  {
+    "country_of_origin": "ID",
+    "located_in_country": "ID",
+    "name": "BP2MI Helpline (Indonesian Migrant Worker Protection Agency)",
+    "phone": "+62 21 2924 4800",
+    "whatsapp": "+62 813 8101 0808",
+    "languages": ["id", "en"]
+  },
+  {
+    "country_of_origin": "PH",
+    "located_in_country": "SA",
+    "name": "Migrante Saudi Arabia (NGO)",
+    "whatsapp": "+966 53 818 6644",
+    "languages": ["en", "tl"]
+  },
+  {
+    "country_of_origin": "ID",
+    "located_in_country": "MY",
+    "name": "Tenaganita (Malaysia migrant workers NGO)",
+    "phone": "+603 7773 7300",
+    "whatsapp": "+60 12 339 5350",
+    "languages": ["en", "id", "ms"]
+  }
+]

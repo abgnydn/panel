@@ -1,0 +1,202 @@
+[
+  {
+    "id": "case-001",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "passport_retention",
+    "outcome": "abuse_reported",
+    "year": 2023,
+    "anonymized_facts": "Domestic worker's passport retained on arrival despite KSA 2017 prohibition. Worker isolated, wages withheld 4 months. Resolved via embassy intervention after 6 months."
+  },
+  {
+    "id": "case-002",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "recruitment_fees",
+    "outcome": "worker_returned_early",
+    "year": 2022,
+    "anonymized_facts": "Worker paid SAR 14,000 recruitment fee. Salary garnished to repay. Returned home after 11 months with no savings, still in debt."
+  },
+  {
+    "id": "case-003",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "live_in_isolation",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Live-in domestic worker. No off-days for 8 months. No phone access except via employer. Returned early after employer agreed to repatriate."
+  },
+  {
+    "id": "case-004",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "passport_retention",
+    "outcome": "resolved_favorably",
+    "year": 2024,
+    "anonymized_facts": "Worker insisted on keeping passport at arrival per pre-departure briefing. Employer initially objected; supervisor intervened. Worker kept document; employment continued without issue."
+  },
+  {
+    "id": "case-005",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "live_in_isolation",
+    "outcome": "abuse_reported",
+    "year": 2023,
+    "anonymized_facts": "Domestic worker confined to employer's home, denied off-days for 14 months. Physical abuse alleged. Rescued via embassy hotline after smuggled phone call."
+  },
+  {
+    "id": "case-006",
+    "source": "ilo",
+    "country_of_origin": "ID",
+    "destination_country": "MY",
+    "clause_category": "wage_deduction",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Open-ended deduction clause used to withhold 60% of wages over 8 months citing 'damages.' Worker returned via BP2MI assistance."
+  },
+  {
+    "id": "case-007",
+    "source": "ilo",
+    "country_of_origin": "ID",
+    "destination_country": "MY",
+    "clause_category": "passport_retention",
+    "outcome": "abuse_reported",
+    "year": 2022,
+    "anonymized_facts": "Passport retained at arrival. Worker reported wage non-payment for 5 months. Police intervention; employer charged under Anti-Trafficking Act."
+  },
+  {
+    "id": "case-008",
+    "source": "ilo",
+    "country_of_origin": "ID",
+    "destination_country": "MY",
+    "clause_category": "live_in_isolation",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Live-in worker. Employer-controlled phone access. Returned early after BP2MI helpline contact."
+  },
+  {
+    "id": "case-009",
+    "source": "hrw",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "working_hours",
+    "outcome": "abuse_reported",
+    "year": 2022,
+    "anonymized_facts": "Contract clause 'as required by household demands.' Worker reported 18-hour days, no rest. Health collapse; medical repatriation."
+  },
+  {
+    "id": "case-010",
+    "source": "hrw",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "recruitment_fees",
+    "outcome": "unresolved",
+    "year": 2023,
+    "anonymized_facts": "Recruitment debt SAR 12,500. Worker remained in poor conditions to complete debt repayment. Status at last contact: still employed under coercion."
+  },
+  {
+    "id": "case-011",
+    "source": "amnesty",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "live_in_isolation",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Domestic worker live-in. Recruiter promised SAR 1,800; contract said SAR 1,400. Returned early after 7 months disputing salary."
+  },
+  {
+    "id": "case-012",
+    "source": "amnesty",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "passport_retention",
+    "outcome": "resolved_favorably",
+    "year": 2024,
+    "anonymized_facts": "Worker quoted KSA 2017 law to employer at arrival; employer returned passport same day."
+  },
+  {
+    "id": "case-013",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "wage_deduction",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Deductions for 'damages' totaled SAR 4,200 over 6 months on SAR 1,400 monthly wage. Worker returned with assistance from POLO Riyadh."
+  },
+  {
+    "id": "case-014",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "live_in_isolation",
+    "outcome": "resolved_favorably",
+    "year": 2024,
+    "anonymized_facts": "Worker negotiated weekly half-day off prior to signing. Employment continued normally for 24 months."
+  },
+  {
+    "id": "case-015",
+    "source": "ilo",
+    "country_of_origin": "ID",
+    "destination_country": "MY",
+    "clause_category": "wage_deduction",
+    "outcome": "abuse_reported",
+    "year": 2023,
+    "anonymized_facts": "Worker reported 70% wage withholding under 'training cost recovery' clause. Police investigation initiated."
+  },
+  {
+    "id": "case-016",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "passport_retention",
+    "outcome": "abuse_reported",
+    "year": 2023,
+    "anonymized_facts": "Passport retained for 22 months despite multiple worker requests. Workplace abuse during retention period."
+  },
+  {
+    "id": "case-017",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "recruitment_fees",
+    "outcome": "worker_returned_early",
+    "year": 2022,
+    "anonymized_facts": "SAR 11,000 recruitment debt + low wage made savings impossible. Returned at month 14 with zero savings."
+  },
+  {
+    "id": "case-018",
+    "source": "hrw",
+    "country_of_origin": "ID",
+    "destination_country": "MY",
+    "clause_category": "live_in_isolation",
+    "outcome": "abuse_reported",
+    "year": 2023,
+    "anonymized_facts": "Live-in worker confined for 11 months. Rescue via NGO smuggled-phone outreach."
+  },
+  {
+    "id": "case-019",
+    "source": "amnesty",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "passport_retention",
+    "outcome": "worker_returned_early",
+    "year": 2023,
+    "anonymized_facts": "Passport returned only at employer convenience. Worker delayed return by 4 months."
+  },
+  {
+    "id": "case-020",
+    "source": "ilo",
+    "country_of_origin": "PH",
+    "destination_country": "SA",
+    "clause_category": "working_hours",
+    "outcome": "worker_returned_early",
+    "year": 2024,
+    "anonymized_facts": "Contract allowed unlimited working hours. Worker averaged 15-hour days. Returned at month 9 with chronic exhaustion."
+  }
+]
