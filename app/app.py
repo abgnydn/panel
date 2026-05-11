@@ -24,7 +24,7 @@ from typing import Any
 
 import streamlit as st
 
-from app import llm, ocr
+from app import amendments, export, llm, ocr
 from app.agents import run_panel
 
 
@@ -311,6 +311,9 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
             contract_text, source_label = ocr.extract_text(raw, mime_hint=intake["contract_mime"])
         status.update(label=f"📄 Contract loaded ({source_label}, {len(contract_text)} chars)", state="complete")
 
+    # Stash for what-if simulator
+    st.session_state["__last_contract_text"] = contract_text
+
     with st.expander("📋 Extracted contract text", expanded=False):
         st.text(contract_text[:3000] + ("…" if len(contract_text) > 3000 else ""))
 
@@ -574,16 +577,260 @@ def render_checklist(result: dict[str, Any], lang: str) -> None:
                         st.caption(f"Suggested replacement: _{suggested}_")
 
 
+def render_provenance(result: dict[str, Any]) -> None:
+    """Per-reel-item drilldown showing the exact statute / case / clause cited."""
+    reel = result.get("disagreement_reel") or []
+    if not reel:
+        return
+    st.divider()
+    st.subheader("🔍 Provenance — why the panel decided this")
+    st.caption(
+        "Every verdict in the reel above is backed by a specific statute, "
+        "international convention, or archived case. Click to inspect."
+    )
+    agents = result.get("agents") or {}
+    for item in reel:
+        with st.expander(f"#{item.get('rank', '?')} · {item.get('topic', '')}"):
+            topic = (item.get("topic") or "").lower().replace(" ", "_")
+            citations: list[str] = []
+
+            for c in (agents.get("lawyer") or {}).get("clause_analyses") or []:
+                if not isinstance(c, dict):
+                    continue
+                ct = (c.get("clause_topic") or "").lower().replace(" ", "_")
+                if ct and (ct in topic or topic in ct):
+                    citations.append(
+                        f"⚖️ **Lawyer** — *{c.get('verdict', '?')}*  \n"
+                        f"&nbsp;&nbsp;**Statute:** `{c.get('statute', '?')}`  \n"
+                        f"&nbsp;&nbsp;**Reasoning:** {c.get('reasoning', '?')}  \n"
+                        f"&nbsp;&nbsp;**Clause excerpt:** _{c.get('clause_excerpt', '')[:200]}_"
+                    )
+
+            for area in (agents.get("regulator") or {}).get("core_area_analysis") or []:
+                if not isinstance(area, dict):
+                    continue
+                at = (area.get("area") or "").lower().replace(" ", "_")
+                if at and (at in topic or topic in at):
+                    citations.append(
+                        f"🏛️ **Regulator** — *{area.get('verdict', '?')}*  \n"
+                        f"&nbsp;&nbsp;**ILO standard:** `{area.get('ilo_standard', '?')}`  \n"
+                        f"&nbsp;&nbsp;**ASEAN standard:** `{area.get('asean_standard', '—')}`  \n"
+                        f"&nbsp;&nbsp;**Ratification status:** {area.get('ratification_status', '?')}"
+                    )
+
+            for m in (agents.get("peer_advocate") or {}).get("clause_pattern_matches") or []:
+                if not isinstance(m, dict):
+                    continue
+                pt = (m.get("clause_topic") or "").lower().replace(" ", "_")
+                if pt and (pt in topic or topic in pt):
+                    od = m.get("outcome_distribution") or {}
+                    citations.append(
+                        f"🫱🏽‍🫲🏾 **Peer Advocate** — *{m.get('similar_cases_count', '?')} similar cases*  \n"
+                        f"&nbsp;&nbsp;**Resolved favorably:** {od.get('resolved_favorably', 0)}  \n"
+                        f"&nbsp;&nbsp;**Returned early:** {od.get('worker_returned_early', 0)}  \n"
+                        f"&nbsp;&nbsp;**Abuse reported:** {od.get('abuse_reported', 0)}  \n"
+                        f"&nbsp;&nbsp;**Pattern warning:** {m.get('pattern_warning', '?')}"
+                    )
+
+            if citations:
+                for cit in citations:
+                    st.markdown(cit)
+                    st.write("")
+            else:
+                st.info("No structured citations matched this topic — see agent summaries.")
+
+
+def render_asean_diff(result: dict[str, Any]) -> None:
+    """Side-by-side: contract clauses vs ASEAN / ILO standard."""
+    regulator = (result.get("agents") or {}).get("regulator") or {}
+    areas = regulator.get("core_area_analysis") or []
+    if not areas:
+        return
+    st.divider()
+    st.subheader("📊 This contract vs the ASEAN standard")
+    st.caption(
+        "Side-by-side comparison of each ILO core area. The Regulator agent's "
+        "gap analysis, rendered as a diff."
+    )
+
+    VERDICT_COLORS = {
+        "meets_standard":    ("#2e7d32", "Meets standard"),
+        "below_standard":    ("#e64a19", "Below standard"),
+        "prohibited_clause": ("#b71c1c", "Prohibited clause"),
+        "silent":            ("#9e9e9e", "Silent"),
+    }
+    for area in areas:
+        if not isinstance(area, dict):
+            continue
+        verdict_key = area.get("verdict", "silent")
+        color, label = VERDICT_COLORS.get(verdict_key, ("#9e9e9e", verdict_key))
+        with st.container(border=True):
+            cols = st.columns([2, 4, 4])
+            with cols[0]:
+                st.markdown(
+                    f"<div style='font-size:13px;color:{color};font-weight:700;'>{label.upper()}</div>"
+                    f"<div style='font-size:16px;font-weight:600;'>{area.get('area', '?').replace('_', ' ').title()}</div>",
+                    unsafe_allow_html=True,
+                )
+                if area.get("severity"):
+                    st.caption(f"severity: {area['severity']}")
+            with cols[1]:
+                st.markdown("**This contract**")
+                st.caption(area.get("contract_position", "(no extract)"))
+            with cols[2]:
+                st.markdown("**ASEAN / ILO standard**")
+                ilo = area.get("ilo_standard", "")
+                asean = area.get("asean_standard", "")
+                if ilo:
+                    st.caption(f"**ILO:** {ilo}")
+                if asean:
+                    st.caption(f"**ASEAN:** {asean}")
+                if area.get("ratification_status"):
+                    st.caption(f"_{area['ratification_status']}_")
+
+
+def render_what_if(result: dict[str, Any], intake: dict[str, Any]) -> None:
+    """Worker selects pushback items; simulate the recruiter agreeing; show urgency delta."""
+    cl = result.get("checklist") or {}
+    pushback = cl.get("recruiter_pushback") or []
+    if not pushback:
+        return
+    st.divider()
+    st.subheader("🪄 What if the recruiter agrees?")
+    st.caption(
+        "Select which pushback items you'd ask the recruiter to accept, then run "
+        "the panel again on the amended contract. See how your urgency changes."
+    )
+
+    # Save the original contract text for replay
+    contract_text = st.session_state.get("contract_text_for_replay")
+    if not contract_text:
+        st.info("Run the panel review above first to enable what-if simulation.")
+        return
+
+    selected_ids: list[int] = []
+    for i, item in enumerate(pushback):
+        if not isinstance(item, dict):
+            continue
+        cnum = item.get("clause_number", "?")
+        ask = item.get("ask", "")
+        if st.checkbox(f"**Clause {cnum}:** {ask}", key=f"whatif_{i}"):
+            selected_ids.append(i)
+
+    if not selected_ids:
+        st.info("Select one or more amendments above to simulate.")
+        return
+
+    if not st.button("Simulate amendments", type="primary"):
+        return
+
+    selected = [pushback[i] for i in selected_ids]
+    amended = amendments.amend_contract(contract_text, selected)
+
+    with st.spinner(f"Re-running panel on amended contract ({len(selected)} changes)..."):
+        amended_result = run_panel(
+            contract_text=amended,
+            situation=intake.get("situation", ""),
+            destination_country=intake["destination"],
+            origin_country=intake["origin"],
+            worker_l1=intake["lang"],
+            persist=False,
+            run_round2=False,    # speed: skip Round 2 on simulation
+            run_checklist=False, # speed: skip checklist on simulation
+        )
+
+    delta = amendments.urgency_delta(result, amended_result)
+    cols = st.columns(3)
+    with cols[0]:
+        st.metric("Urgency before", f"{delta['urgency_before']}/10")
+    with cols[1]:
+        st.metric("Urgency after", f"{delta['urgency_after']}/10",
+                  delta=f"-{delta['urgency_drop']}" if delta["urgency_drop"] > 0 else "0")
+    with cols[2]:
+        st.metric("Reel items", f"{delta['reel_after']}",
+                  delta=f"{delta['reel_after'] - delta['reel_before']}")
+    st.success(delta["verdict"])
+
+    new_reel = amended_result.get("disagreement_reel") or []
+    if new_reel:
+        st.markdown("**Remaining tensions:**")
+        for d in new_reel:
+            st.markdown(f"- **#{d.get('rank', '?')} · sev {d.get('severity', '?')}** · {d.get('topic', '')}")
+    else:
+        st.success("No remaining tensions detected — panel reached consensus on the amended contract.")
+
+
+def render_export(result: dict[str, Any]) -> None:
+    """Download buttons + QR for the recommendation."""
+    st.divider()
+    st.subheader("📥 Take it with you")
+    st.caption("Save this offline before flying. Print, screenshot, or share via WhatsApp.")
+
+    cols = st.columns(3)
+    with cols[0]:
+        md_bytes = export.to_markdown(result).encode("utf-8")
+        st.download_button(
+            "Download Markdown",
+            data=md_bytes,
+            file_name="panel_review.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
+    with cols[1]:
+        try:
+            pdf_bytes = export.to_pdf(result)
+            st.download_button(
+                "Download PDF",
+                data=pdf_bytes,
+                file_name="panel_review.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+        except Exception as exc:
+            st.caption(f"PDF unavailable: {exc}")
+    with cols[2]:
+        # QR encodes a compact summary so peers can scan & save
+        urg = result.get("final_urgency_score", "?")
+        dest = result.get("destination_country", "?")
+        orig = result.get("origin_country", "?")
+        contacts = (result.get("recommendation") or {}).get("contacts") or []
+        first_contact = contacts[0] if contacts else {}
+        payload = (
+            f"PANEL REVIEW\n"
+            f"Urgency: {urg}/10\n"
+            f"Corridor: {orig} -> {dest}\n"
+            f"Embassy: {first_contact.get('name', '?')} {first_contact.get('phone', '')}\n"
+        )
+        try:
+            qr_bytes = export.to_qr_png(payload)
+            st.image(qr_bytes, caption="Scan to save offline", width=200)
+        except Exception as exc:
+            st.caption(f"QR unavailable: {exc}")
+
+
 def main() -> None:
     render_sidebar()
     intake = render_intake()
     if intake is None:
         return
     result = render_panel_review(intake)
+    # Stash for what-if replay
+    st.session_state["contract_text_for_replay"] = result.get("agents", {}).get(
+        "translator", {}
+    ).get("__contract_text") or _last_contract_text()
     render_disagreement_reel(result, intake["lang"])
+    render_provenance(result)
     render_rebuttals(result)
+    render_asean_diff(result)
     render_checklist(result, intake["lang"])
+    render_what_if(result, intake)
     render_recommendation(result, intake["lang"])
+    render_export(result)
+
+
+def _last_contract_text() -> str:
+    """Fallback: pull from session state if render_panel_review stashed it."""
+    return st.session_state.get("__last_contract_text", "")
 
 
 if __name__ == "__main__":
