@@ -24,7 +24,7 @@ from typing import Any
 
 import streamlit as st
 
-from app import amendments, export, llm, ocr
+from app import amendments, export, llm, ocr, providers
 from app.agents import run_panel
 
 
@@ -193,29 +193,85 @@ def has_sample(origin: str, destination: str) -> bool:
 # ----------------------------------------------------------------------------
 def render_sidebar() -> None:
     with st.sidebar:
-        st.markdown("### Backend")
-        if llm.is_live():
-            st.success(f"LLM: {llm.provider_label()}")
-        else:
-            st.info("LLM: mock mode\n\n*Install `claude` CLI or set `ANTHROPIC_API_KEY`.*")
+        st.markdown("### 🔌 Backend")
 
-        with st.expander("Provider details"):
-            st.markdown(
-                f"- Active: **`{llm.PROVIDER}`**\n"
-                f"- Anthropic API key: {'set' if os.environ.get('ANTHROPIC_API_KEY') else 'not set'}\n"
-                f"- `claude` CLI: {'available' if llm._claude_cli_available() else 'not found'}\n"
-                f"- Force with `PANEL_LLM_PROVIDER=claude_cli|anthropic|mock`"
+        provider_ids = list(providers.PROVIDERS.keys())
+        labels = {pid: spec["label"] for pid, spec in providers.PROVIDERS.items()}
+
+        current = st.session_state.get("panel_provider") or providers.default_provider()
+        choice = st.selectbox(
+            "Provider",
+            provider_ids,
+            index=provider_ids.index(current) if current in provider_ids else 0,
+            format_func=lambda pid: labels[pid],
+            key="panel_provider",
+        )
+        spec = providers.PROVIDERS[choice]
+        st.caption(spec["description"])
+
+        keys = st.session_state.setdefault("panel_keys", {})
+        models = st.session_state.setdefault("panel_models", {})
+
+        if spec.get("needs_key"):
+            env_value = os.environ.get(spec.get("env_key") or "")
+            placeholder = "stored in session only — never written to disk"
+            help_text = ""
+            if env_value:
+                help_text = f"_(env var `{spec['env_key']}` is set — leave blank to use it)_"
+            keys[choice] = st.text_input(
+                f"{spec['label']} API key",
+                value=keys.get(choice, ""),
+                type="password",
+                placeholder=placeholder,
+                help=help_text or None,
+                key=f"key_input_{choice}",
             )
-            if llm.PROVIDER == "claude_cli" and not os.environ.get("ANTHROPIC_API_KEY"):
-                st.caption(
-                    "⚠️ Image OCR needs the Anthropic SDK. Without `ANTHROPIC_API_KEY`, "
-                    "image uploads will fall back to mock OCR. Use the sample contract "
-                    "or upload a PDF for full live behavior."
+
+        if spec.get("needs_url"):
+            st.session_state["panel_lmstudio_url"] = st.text_input(
+                "Server URL",
+                value=st.session_state.get("panel_lmstudio_url",
+                                            "http://localhost:1234/v1/chat/completions"),
+                key=f"url_input_{choice}",
+            )
+
+        if spec["models"]:
+            current_model = models.get(choice) or spec["default_model"]
+            models[choice] = st.selectbox(
+                "Model",
+                spec["models"],
+                index=spec["models"].index(current_model) if current_model in spec["models"] else 0,
+                key=f"model_input_{choice}",
+            )
+        elif spec.get("needs_url"):
+            models[choice] = st.text_input(
+                "Model name",
+                value=models.get(choice, spec["default_model"]),
+                help="The ID of the currently-loaded model in LM Studio (e.g. `qwen3-14b-mlx`).",
+                key=f"model_freeform_{choice}",
+            )
+
+        if st.button("🔍 Test connection", use_container_width=True):
+            with st.spinner("Pinging…"):
+                ok, msg = providers.test(
+                    choice,
+                    key=keys.get(choice),
+                    model=models.get(choice) or spec["default_model"],
+                    url=st.session_state.get("panel_lmstudio_url"),
                 )
+            (st.success if ok else st.error)(msg)
+
+        st.divider()
+
+        if llm.is_live():
+            st.success(f"Active: {llm.provider_label()}")
+        else:
+            st.info("Active: mock (no live backend)")
+
         st.markdown("### About")
         st.caption(
             "Panel is a multi-agent rights advisor for APJ migrant workers. "
-            "5 specialist agents review your contract in parallel, surface where they disagree, "
+            "6 specialist agents review your contract in parallel, surface where they disagree, "
             "and synthesize a recommendation in your mother tongue."
         )
         st.caption("Built for the Databricks Building Intelligent Apps Hackathon, May 2026.")

@@ -45,15 +45,16 @@ PROVIDER = _provider()
 
 
 def is_live() -> bool:
-    return PROVIDER in {"anthropic", "claude_cli"}
+    """True when the active backend is not the mock."""
+    from . import providers
+    return providers.get_config()["provider"] != "mock"
 
 
 def provider_label() -> str:
-    return {
-        "claude_cli": "live (Claude CLI)",
-        "anthropic": "live (Anthropic SDK)",
-        "mock": "mock mode",
-    }.get(PROVIDER, PROVIDER)
+    from . import providers
+    cfg = providers.get_config()
+    spec = providers.PROVIDERS.get(cfg["provider"], {})
+    return f"{spec.get('label', cfg['provider'])} / {cfg.get('model') or '?'}"
 
 
 def complete(
@@ -65,28 +66,31 @@ def complete(
     max_tokens: int = 2000,
     model: str = "claude-sonnet-4-6",
 ) -> LLMResponse:
-    """Single-turn completion. Optional image input for contract OCR.
+    """Single-turn completion via the multi-provider registry.
 
-    Returns LLMResponse with the model's text output.
+    The active provider, key, and model are resolved from Streamlit
+    session_state (UI-entered values) or environment variables, with a
+    sensible default.
 
-    Image input is only supported by the Anthropic SDK path. If the active
-    provider is claude_cli and an image is supplied, falls back to anthropic
-    if a key is available, otherwise mock.
+    Image input is only supported by providers that declare
+    supports_vision=True. If the active provider doesn't, the call is
+    routed to Anthropic when a key is available, else mock.
     """
-    if image_bytes is not None:
-        # Vision path: claude_cli doesn't accept raw image bytes via stdin,
-        # so route to anthropic if possible, else mock.
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            return _anthropic(system=system, user=user, image_bytes=image_bytes,
-                              image_mime=image_mime, max_tokens=max_tokens, model=model)
-        return _mock(system=system, user=user, image_bytes=image_bytes)
-
-    if PROVIDER == "claude_cli":
-        return _claude_cli(system=system, user=user, max_tokens=max_tokens, model=model)
-    if PROVIDER == "anthropic":
-        return _anthropic(system=system, user=user, image_bytes=None,
-                          image_mime=image_mime, max_tokens=max_tokens, model=model)
-    return _mock(system=system, user=user, image_bytes=None)
+    from . import providers
+    try:
+        r = providers.complete(
+            system, user,
+            max_tokens=max_tokens, image_bytes=image_bytes,
+            image_mime=image_mime, model=model,
+        )
+        return LLMResponse(text=r.text, usage=r.usage, provider=r.provider)
+    except Exception as exc:
+        # Final safety net: never let the UI crash on a provider failure.
+        # Fall back to mock so the demo still flows.
+        m = _mock(system=system, user=user, image_bytes=image_bytes)
+        m.text = m.text  # noqa: keep mock shape
+        m.usage = {"input_tokens": 0, "output_tokens": 0, "_fallback_reason": str(exc)[:200]}
+        return m
 
 
 # ----------------------------------------------------------------------------
