@@ -124,6 +124,7 @@ AGENT_DISPLAY = {
     "regulator":     ("🏛️", "Regulator",     "ILO / ASEAN standards"),
     "peer_advocate": ("🫱🏽‍🫲🏾", "Peer Advocate", "Similar past cases"),
     "triage":        ("🚨", "Triage",        "Urgency & contacts"),
+    "negotiator":    ("💬", "Negotiator",    "What to say before signing"),
 }
 
 STANCE_BADGE = {
@@ -148,6 +149,7 @@ AGENT_STATUS_CYCLE = {
     "regulator":     ["Loading ILO conventions…", "Comparing to ASEAN standard…", "Scoring 8 core areas…", "Building gap analysis…"],
     "peer_advocate": ["Loading case archive…", "Matching by clause topic…", "Tallying outcomes…", "Looking for patterns…"],
     "triage":        ["Scanning trafficking indicators…", "Cross-referencing situation…", "Scoring urgency…", "Routing to contacts…"],
+    "negotiator":    ["Reading other agents' findings…", "Drafting questions in your language…", "Anticipating recruiter deflections…", "Picking the priority pushback…"],
 }
 
 SEVERITY_BADGE = {
@@ -319,8 +321,10 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
 
     # ----- Step 2: launch panel with progress UI -----
     st.subheader(s["reviewing"])
-    progress = st.progress(0.0, text="0 / 5 agents completed")
-    panes = st.columns(5)
+    n_agents = len(AGENT_DISPLAY)
+    progress = st.progress(0.0, text=f"0 / {n_agents} agents completed")
+    # Two rows: 5 main + 1 wider for negotiator (or just one row of 6)
+    panes = st.columns(n_agents)
     placeholders: dict[str, Any] = {}
     start_times: dict[str, float] = {}
 
@@ -341,8 +345,8 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
         completed[name] = output
         completed_count[0] += 1
         progress.progress(
-            completed_count[0] / 5,
-            text=f"{completed_count[0]} / 5 agents completed",
+            completed_count[0] / n_agents,
+            text=f"{completed_count[0]} / {n_agents} agents completed",
         )
         elapsed = (output.get("_latency_ms") or 0) / 1000.0
         with placeholders[name].container():
@@ -808,6 +812,91 @@ def render_export(result: dict[str, Any]) -> None:
             st.caption(f"QR unavailable: {exc}")
 
 
+def render_negotiation(result: dict[str, Any], lang: str) -> None:
+    """The Negotiator agent's output — conversation script for the recruiter meeting."""
+    neg = (result.get("agents") or {}).get("negotiator") or {}
+    if not isinstance(neg, dict) or neg.get("error"):
+        return
+    questions = neg.get("questions_to_ask") or []
+    red_flags = neg.get("red_flag_responses") or []
+    pushback = neg.get("priority_pushback") or {}
+    strategy = neg.get("negotiation_strategy") or ""
+
+    if not (questions or red_flags or pushback or strategy):
+        return
+
+    st.divider()
+    st.subheader("💬 Negotiation coach — what to say before signing")
+    st.caption(
+        "Other agents diagnosed. This one coaches. Use these in your conversation "
+        "with the recruiter or employer — information-gathering, not confrontation."
+    )
+
+    if strategy:
+        with st.container(border=True):
+            st.markdown(f"**Strategy:** {strategy}")
+
+    if pushback and isinstance(pushback, dict) and pushback.get("what_to_say_in_l1"):
+        st.markdown("### 🎯 Your priority pushback")
+        with st.container(border=True):
+            cnum = pushback.get("clause_number", "?")
+            topic = pushback.get("topic", "")
+            l1_text = pushback.get("what_to_say_in_l1", "")
+            en_text = pushback.get("what_to_say_in_english", "")
+            fallback = pushback.get("fallback_if_refused", "")
+            walkaway = pushback.get("walk_away_threshold", "")
+            st.markdown(
+                f"<div style='font-size:11px;letter-spacing:1px;color:#b71c1c;font-weight:700;'>"
+                f"CLAUSE {cnum} · {topic.upper()}</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown(f"**Say this:** _{l1_text}_")
+            if en_text and lang != "en":
+                st.caption(f"English: {en_text}")
+            if fallback:
+                st.markdown(f"**If they refuse:** {fallback}")
+            if walkaway:
+                st.error(f"🛑 **Walk away if:** {walkaway}")
+
+    if questions:
+        st.markdown("### ❓ Questions to ask")
+        for i, q in enumerate(questions, 1):
+            if not isinstance(q, dict):
+                continue
+            with st.container(border=True):
+                cref = q.get("clause_reference", "general")
+                why = q.get("why_ask", "")
+                listen = q.get("what_to_listen_for", "")
+                q_l1 = q.get("question_in_l1", "")
+                q_en = q.get("question_in_english", "")
+                st.markdown(
+                    f"<div style='font-size:11px;letter-spacing:1px;color:#1976d2;font-weight:700;'>"
+                    f"Q{i} · CLAUSE {cref}</div>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(f"**{q_l1}**")
+                if q_en and lang != "en":
+                    st.caption(f"English: _{q_en}_")
+                if why:
+                    st.markdown(f"_Why ask:_ {why}")
+                if listen:
+                    st.markdown(f"_Listen for:_ {listen}")
+
+    if red_flags:
+        st.markdown("### 🚩 Red-flag responses to listen for")
+        for rf in red_flags:
+            if not isinstance(rf, dict):
+                continue
+            with st.container(border=True):
+                says = rf.get("if_recruiter_says", "")
+                means = rf.get("what_it_actually_means", "")
+                move = rf.get("your_move", "")
+                st.markdown(f'**If the recruiter says:** _"{says}"_')
+                st.markdown(f"**It actually means:** {means}")
+                if move:
+                    st.markdown(f"**Your move:** {move}")
+
+
 def main() -> None:
     render_sidebar()
     intake = render_intake()
@@ -823,6 +912,7 @@ def main() -> None:
     render_rebuttals(result)
     render_asean_diff(result)
     render_checklist(result, intake["lang"])
+    render_negotiation(result, intake["lang"])
     render_what_if(result, intake)
     render_recommendation(result, intake["lang"])
     render_export(result)

@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable
 
 from .. import cache, store
-from . import (checklist, disagreement, lawyer, peer_advocate, rebuttal,
-               regulator, translator, triage)
+from . import (checklist, disagreement, lawyer, negotiator, peer_advocate,
+               rebuttal, regulator, translator, triage)
 from .base import AgentResult, run_with_timing
 
 
@@ -45,7 +45,7 @@ def run_panel(
         if cached:
             cached["_cache_hit"] = True
             if on_agent_done:
-                for name in ("lawyer", "translator", "regulator", "peer_advocate", "triage"):
+                for name in ("lawyer", "translator", "regulator", "peer_advocate", "triage", "negotiator"):
                     out = cached.get("agents", {}).get(name)
                     if out:
                         on_agent_done(name, out)
@@ -69,12 +69,15 @@ def run_panel(
         "regulator": lambda: regulator.run(contract_text, destination_country, origin_country),
         "peer_advocate": lambda: peer_advocate.run(contract_text, situation, destination_country, origin_country),
         "triage": lambda: triage.run(contract_text, situation, destination_country, origin_country),
+        "negotiator": lambda: negotiator.run(
+            contract_text, situation, destination_country, origin_country, worker_l1,
+        ),
     }
 
     outputs: dict[str, dict[str, Any]] = {}
     errors: dict[str, str] = {}
 
-    with ThreadPoolExecutor(max_workers=5) as pool:
+    with ThreadPoolExecutor(max_workers=6) as pool:
         futures = {
             pool.submit(run_with_timing, name, fn): name
             for name, fn in tasks.items()

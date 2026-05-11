@@ -21,6 +21,7 @@ ROLE_TAGLINES = {
     "regulator":     "ILO labor-standards specialist",
     "peer_advocate": "community advocate working with returnees",
     "triage":        "anti-trafficking NGO triage worker",
+    "negotiator":    "labor negotiator coaching the worker",
 }
 
 SYSTEM_TMPL = """You are the {tagline} on a panel reviewing a migrant worker's employment contract.
@@ -79,7 +80,7 @@ def run_rebuttals(
     on_agent_done: Callable[[str, dict], None] | None = None,
 ) -> dict[str, dict]:
     """For each of the 5 agents, generate a 2-3 sentence Round 2 rebuttal."""
-    agent_names = ["lawyer", "translator", "regulator", "peer_advocate", "triage"]
+    agent_names = ["lawyer", "translator", "regulator", "peer_advocate", "triage", "negotiator"]
 
     def task_for(name: str):
         others = {k: v for k, v in round1_outputs.items() if k != name}
