@@ -17,6 +17,7 @@ env/
 
 # Streamlit
 .streamlit/secrets.toml
+.streamlit/local.toml
 
 # OS
 .DS_Store
