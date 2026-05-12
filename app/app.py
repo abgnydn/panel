@@ -63,7 +63,7 @@ ORIGINS = {
 UI = {
     "tl": {
         "title": "Panel",
-        "subtitle": "Tinitingnan ng panel ng AI ang iyong kontrata — sa iyong wika.",
+        "subtitle": "Tinitingnan ng panel ng AI ang iyong kontrata — <em>sa iyong wika</em>.",
         "lang_label": "Ang wika mo",
         "origin_label": "Saan ka galing?",
         "dest_label": "Saan ka magtatrabaho?",
@@ -82,7 +82,7 @@ UI = {
     },
     "id": {
         "title": "Panel",
-        "subtitle": "Panel AI membaca kontrak Anda — dalam bahasa Anda.",
+        "subtitle": "Panel AI membaca kontrak Anda — <em>dalam bahasa Anda</em>.",
         "lang_label": "Bahasa Anda",
         "origin_label": "Anda dari negara mana?",
         "dest_label": "Di mana Anda akan bekerja?",
@@ -101,7 +101,7 @@ UI = {
     },
     "en": {
         "title": "Panel",
-        "subtitle": "A panel of AI specialists reads your contract — in your language.",
+        "subtitle": "A panel of AI specialists reads your contract — <em>in your language</em>.",
         "lang_label": "Your language",
         "origin_label": "Where are you from?",
         "dest_label": "Where are you going to work?",
@@ -398,7 +398,23 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
              "when its verdict lands. The slowest agent sets the wall clock.",
     )
     n_agents = len(AGENT_DISPLAY)
-    progress = st.progress(0.0, text=f"0 / {n_agents} agents completed")
+    progress_placeholder = st.empty()
+
+    def render_segmented(completed_set: set[str]) -> None:
+        items = []
+        for k in AGENT_DISPLAY.keys():
+            _e, name, _t = AGENT_DISPLAY[k]
+            status = "done" if k in completed_set else "active"
+            items.append({
+                "name": name,
+                "status": status,
+                "tint": style.AGENT_TINTS.get(k, "#64748b"),
+            })
+        with progress_placeholder.container():
+            style.segmented_progress(items)
+
+    render_segmented(set())
+
     panes = st.columns(n_agents)
     placeholders: dict[str, Any] = {}
     start_times: dict[str, float] = {}
@@ -421,10 +437,7 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
     def on_done(name: str, output: dict) -> None:
         completed[name] = output
         completed_count[0] += 1
-        progress.progress(
-            completed_count[0] / n_agents,
-            text=f"{completed_count[0]} / {n_agents} agents completed",
-        )
+        render_segmented(set(completed.keys()))
         elapsed = (output.get("_latency_ms") or 0) / 1000.0
         emoji, label, _tagline = AGENT_DISPLAY[name]
         tint = style.AGENT_TINTS.get(name, "#64748b")
@@ -458,7 +471,7 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
                 unsafe_allow_html=True,
             )
 
-    progress.empty()
+    progress_placeholder.empty()
     return result
 
 

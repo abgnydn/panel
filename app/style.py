@@ -80,7 +80,7 @@ SEVERITY_PALETTE = {
 
 
 _CSS = """
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   --ink: #0f172a;
@@ -155,19 +155,30 @@ section[data-testid="stSidebar"] h3 {
   margin-top: 1.5rem;
 }
 
-/* Streamlit native primary button */
-button[kind="primary"] {
-  background: var(--ink) !important;
+/* Streamlit native primary button — high contrast on dark, with hover lift */
+button[kind="primary"],
+button[kind="primary"] *,
+button[kind="primary"] p,
+button[kind="primary"] span,
+button[kind="primary"] div {
+  background-color: var(--ink) !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
   border: none !important;
-  color: white !important;
+}
+button[kind="primary"] {
   font-weight: 600 !important;
   border-radius: var(--radius-sm) !important;
-  padding: 10px 20px !important;
+  padding: 12px 22px !important;
   box-shadow: var(--shadow-sm) !important;
-  transition: all 200ms var(--easing) !important;
+  transition: all 220ms var(--easing) !important;
+  letter-spacing: -0.01em;
+}
+button[kind="primary"]:hover,
+button[kind="primary"]:hover * {
+  background-color: #1e293b !important;
 }
 button[kind="primary"]:hover {
-  background: #1e293b !important;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md) !important;
 }
@@ -225,59 +236,96 @@ button[kind="primary"]:hover {
 }
 
 /* ---------------------------------------------------------------------------
-   HERO
+   HERO — editorial display, mixed serif/sans, grain texture
    --------------------------------------------------------------------------- */
 .panel-hero {
   position: relative;
-  padding: 40px 44px;
+  padding: 56px 56px 48px;
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(ellipse 600px 300px at top right, rgba(220,38,38,0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 400px 400px at bottom left, rgba(253,224,71,0.10) 0%, transparent 70%),
-    linear-gradient(180deg, #ffffff 0%, var(--warm-tint) 100%);
+    radial-gradient(ellipse 700px 350px at top right, rgba(220,38,38,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 500px 500px at -10% 100%, rgba(253,224,71,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 300px 200px at 60% -10%, rgba(124,58,237,0.06) 0%, transparent 70%),
+    linear-gradient(180deg, #ffffff 0%, var(--warm-tint) 130%);
   border: 1px solid #fde68a;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   overflow: hidden;
   box-shadow: var(--shadow-md);
 }
 .panel-hero::before {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 4px;
-  background: linear-gradient(90deg, var(--accent) 0%, #f59e0b 100%);
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, #f59e0b 70%, transparent 100%);
 }
-.panel-hero-row { display: flex; align-items: center; gap: 28px; }
+/* SVG noise grain overlay for editorial paper feel */
+.panel-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+  opacity: 0.6;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.panel-hero-row {
+  display: flex; align-items: flex-start; gap: 32px;
+  position: relative; z-index: 1;
+}
 .panel-hero-mark {
-  font-size: 56px; line-height: 1;
-  filter: drop-shadow(0 6px 16px rgba(15,23,42,0.10));
   flex-shrink: 0;
+  filter: drop-shadow(0 6px 18px rgba(15,23,42,0.12));
 }
+.panel-hero-mark svg { display: block; }
+
 .panel-hero-title {
-  font-size: 56px; font-weight: 800; line-height: 1.0; margin: 0;
-  letter-spacing: -0.045em; color: var(--ink);
+  font-family: 'Instrument Serif', 'Inter', serif;
+  font-style: italic;
+  font-size: 92px;
+  font-weight: 400;
+  line-height: 0.95;
+  margin: 0;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.panel-hero-title .display-mark {
+  color: var(--accent);
+  font-style: italic;
 }
 .panel-hero-sub {
-  font-size: 19px; color: var(--ink-soft); margin: 10px 0 0;
-  line-height: 1.5; max-width: 640px; font-weight: 450;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px; color: var(--ink-soft); margin: 14px 0 0;
+  line-height: 1.45; max-width: 640px; font-weight: 450;
+  letter-spacing: -0.005em;
+}
+.panel-hero-sub em {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic; font-weight: 400;
+  font-size: 1.05em;
+  color: var(--ink);
 }
 .panel-hero-stats {
-  display: flex; flex-wrap: wrap; gap: 8px;
-  margin-top: 22px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 28px;
+  position: relative; z-index: 1;
 }
 .panel-hero-stat {
-  background: var(--surface);
-  padding: 8px 14px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(6px);
+  padding: 10px 16px;
   border-radius: 999px;
-  font-size: 12px; font-weight: 600;
+  font-size: 12.5px; font-weight: 600;
   color: var(--ink-soft);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(226,232,240,0.8);
   box-shadow: var(--shadow-xs);
-  display: inline-flex; align-items: baseline; gap: 6px;
+  display: inline-flex; align-items: baseline; gap: 8px;
   font-variant-numeric: tabular-nums;
 }
 .panel-hero-stat b {
   color: var(--accent);
   font-weight: 800;
-  font-size: 13px;
+  font-size: 15px;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  letter-spacing: -0.02em;
 }
 
 /* ---------------------------------------------------------------------------
@@ -299,11 +347,18 @@ button[kind="primary"]:hover {
   border-radius: 999px;
 }
 .panel-section-title {
-  font-size: 28px;
+  font-size: 36px;
   font-weight: 700;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
   margin: 0 0 8px;
   color: var(--ink);
+  line-height: 1.1;
+}
+.panel-section-title em {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
 }
 .panel-section-lede {
   color: var(--muted);
@@ -462,7 +517,9 @@ button[kind="primary"]:hover {
   min-width: 110px;
 }
 .urgency-gauge-number {
-  font-size: 56px; font-weight: 800;
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 72px; font-weight: 400;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.05em;
   color: var(--gauge-color);
@@ -529,8 +586,11 @@ button[kind="primary"]:hover {
   pointer-events: none; opacity: 0.6;
 }
 .reel-hero-header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 16px;
 }
 .reel-rank {
   font-size: 11px; font-weight: 700;
@@ -538,9 +598,23 @@ button[kind="primary"]:hover {
   text-transform: uppercase; margin-bottom: 6px;
 }
 .reel-topic {
-  font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
-  color: var(--ink); margin: 4px 0 18px;
-  line-height: 1.1;
+  font-family: 'Instrument Serif', 'Inter', serif;
+  font-style: italic;
+  font-size: 42px; font-weight: 400;
+  letter-spacing: -0.025em;
+  color: var(--ink); margin: 6px 0 22px;
+  line-height: 1.05;
+}
+.reel-hero-rank-big {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 88px;
+  font-weight: 400;
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  color: var(--reel-tint);
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
 }
 .reel-tensions { display: flex; flex-direction: column; gap: 8px; }
 .reel-tension {
@@ -712,16 +786,58 @@ button[kind="primary"]:hover {
 }
 
 /* ---------------------------------------------------------------------------
+   SEGMENTED PROGRESS (replaces st.progress in panel run)
+   --------------------------------------------------------------------------- */
+.seg-progress {
+  display: flex; gap: 8px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin: 12px 0 18px;
+  box-shadow: var(--shadow-xs);
+}
+.seg-dot {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 6px 4px;
+  position: relative;
+}
+.seg-fill {
+  width: 100%; height: 4px; border-radius: 999px;
+  background: #f1f5f9; transition: all 320ms var(--easing);
+}
+.seg-label {
+  font-size: 10.5px; font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  transition: color 320ms var(--easing);
+}
+.seg-active .seg-fill {
+  background: linear-gradient(90deg, var(--seg-tint) 0%, var(--seg-tint) 40%, transparent 40%);
+  background-size: 250% 100%;
+  animation: segActive 1.6s linear infinite;
+}
+.seg-active .seg-label { color: var(--seg-tint); }
+.seg-done .seg-fill { background: var(--seg-tint); }
+.seg-done .seg-label { color: var(--ink); }
+@keyframes segActive {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ---------------------------------------------------------------------------
    MOBILE
    --------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .main .block-container { padding-left: 1rem; padding-right: 1rem; }
   .panel-hero { padding: 28px; }
   .panel-hero-row { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .panel-hero-title { font-size: 38px; }
-  .panel-hero-mark { font-size: 44px; }
+  .panel-hero-title { font-size: 60px; }
+  .panel-hero-mark svg { width: 48px; height: 48px; }
   .reel-hero { padding: 22px; }
-  .reel-topic { font-size: 24px; }
+  .reel-topic { font-size: 28px; }
+  .panel-section-title { font-size: 26px; }
   .urgency-gauge { flex-direction: column; align-items: stretch; gap: 14px; }
   .urgency-gauge-number-wrap { justify-content: center; }
 }
@@ -765,8 +881,21 @@ def top_bar(brand: str, crumb: str = "", status_label: str = "",
     )
 
 
+_BRAND_MARK_SVG = """
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4"  y="28" width="6" height="32" rx="2" fill="#1e40af"/>
+  <rect x="13" y="22" width="6" height="38" rx="2" fill="#0d9488"/>
+  <rect x="22" y="34" width="6" height="26" rx="2" fill="#7c3aed"/>
+  <rect x="31" y="18" width="6" height="42" rx="2" fill="#0891b2"/>
+  <rect x="40" y="26" width="6" height="34" rx="2" fill="#dc2626"/>
+  <rect x="49" y="14" width="6" height="46" rx="2" fill="#d97706"/>
+</svg>
+"""
+
+
 def hero(title: str, subtitle: str, stats: list[tuple[str, str]] | None = None,
-         icon: str = "⚖️", corridor: tuple[str, str] | None = None) -> None:
+         icon: str = "⚖️", corridor: tuple[str, str] | None = None,
+         use_brand_mark: bool = True) -> None:
     """Hero header. `stats` is [(label, value), ...]. `corridor` is (origin, destination)."""
     stats_html = ""
     if stats:
@@ -785,11 +914,12 @@ def hero(title: str, subtitle: str, stats: list[tuple[str, str]] | None = None,
             f"<span class='corridor-chip'>{destination}</span>"
             f"</div>"
         )
+    mark_html = _BRAND_MARK_SVG if use_brand_mark else f"<span style='font-size:56px;'>{icon}</span>"
     st.markdown(
         f"""
         <div class='panel-hero'>
           <div class='panel-hero-row'>
-            <div class='panel-hero-mark'>{icon}</div>
+            <div class='panel-hero-mark'>{mark_html}</div>
             <div>
               <h1 class='panel-hero-title'>{title}</h1>
               <p class='panel-hero-sub'>{subtitle}</p>
@@ -801,6 +931,21 @@ def hero(title: str, subtitle: str, stats: list[tuple[str, str]] | None = None,
         """,
         unsafe_allow_html=True,
     )
+
+
+def segmented_progress(items: list[dict[str, str]]) -> None:
+    """Custom progress component. items = [{name, status, tint}] where
+    status in {'pending', 'active', 'done'}."""
+    dots_html = ""
+    for it in items:
+        name = it.get("name", "")
+        status = it.get("status", "pending")
+        tint = it.get("tint", "#cbd5e1")
+        dots_html += (
+            f"<div class='seg-dot seg-{status}' style='--seg-tint: {tint};' title='{name}'>"
+            f"<span class='seg-fill'></span><span class='seg-label'>{name}</span></div>"
+        )
+    st.markdown(f"<div class='seg-progress'>{dots_html}</div>", unsafe_allow_html=True)
 
 
 def section_heading(eyebrow: str, title: str, lede: str = "") -> None:
