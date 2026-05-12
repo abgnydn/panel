@@ -584,19 +584,16 @@ def _render_tension(tension: dict, *, compact: bool = False) -> None:
 # ----------------------------------------------------------------------------
 def render_recommendation(result: dict[str, Any], lang: str) -> None:
     s = UI[lang]
-    st.divider()
-    st.subheader(s["rec_header"])
+    style.section_heading(
+        eyebrow="The verdict",
+        title=s["rec_header"],
+        lede="Synthesised across all six agents and Round 2 rebuttals. "
+             "Read in your mother tongue, take with you.",
+    )
 
     rec = result["recommendation"]
     urgency = result["final_urgency_score"]
-
-    if urgency >= 7:
-        st.error(f"⚠️ Urgency: {urgency}/10")
-    elif urgency >= 4:
-        st.warning(f"Urgency: {urgency}/10")
-    else:
-        st.success(f"Urgency: {urgency}/10")
-
+    style.urgency_gauge(urgency)
     st.markdown(f"**{rec['tldr']}**")
 
     if rec.get("action_items"):
@@ -1033,8 +1030,22 @@ def render_negotiation(result: dict[str, Any], lang: str) -> None:
                     st.markdown(f"**Your move:** {move}")
 
 
+def _topbar_for_intake(intake: dict[str, Any] | None) -> None:
+    if not intake:
+        crumb = "Pick a sample or upload a contract"
+    else:
+        orig = ORIGINS.get(intake.get("origin", ""), intake.get("origin", ""))
+        dest = DESTINATIONS.get(intake.get("destination", ""), intake.get("destination", ""))
+        lang = LANGUAGES.get(intake.get("lang", "en"), "")
+        crumb = f"{orig} → {dest}  ·  {lang}"
+    status_label = llm.provider_label() if llm.is_live() else "MOCK"
+    tone = "ok" if llm.is_live() else "warn"
+    style.top_bar(brand="Panel", crumb=crumb, status_label=status_label, status_tone=tone)
+
+
 def main() -> None:
     render_sidebar()
+    _topbar_for_intake(None)
     intake = render_intake()
     if intake is None:
         return
