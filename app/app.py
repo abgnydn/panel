@@ -288,45 +288,64 @@ def render_intake() -> dict[str, Any] | None:
         icon="⚖️",
     )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        origin = st.selectbox(
-            s["origin_label"],
-            list(ORIGINS.keys()),
-            format_func=lambda k: ORIGINS[k],
-            index=0 if lang_choice == "tl" else (1 if lang_choice == "id" else 0),
-        )
-    with col2:
-        destination = st.selectbox(
-            s["dest_label"],
-            list(DESTINATIONS.keys()),
-            format_func=lambda k: DESTINATIONS[k],
-            index=0 if lang_choice == "tl" else 1,
-        )
-
-    sample_available = has_sample(origin, destination)
-    if not sample_available:
-        st.info(f"No sample contract for {ORIGINS[origin]} → {DESTINATIONS[destination]}. "
-                f"Switch corridor or upload your own.")
-
-    source_options = (["sample", "upload"] if sample_available else ["upload"])
+    # Source — registry sample vs upload your own.
     source = st.radio(
         s["source_label"],
-        source_options,
+        ["sample", "upload"],
         format_func=lambda k: s["source_sample"] if k == "sample" else s["source_upload"],
         horizontal=True,
     )
 
     contract_file = None
-    if source == "upload":
+    sample_id: str | None = None
+    origin: str
+    destination: str
+
+    if source == "sample":
+        sample_ids = samples.all_ids()
+        sample_id = st.selectbox(
+            "Sample contract",
+            sample_ids,
+            format_func=lambda sid: f"{samples.SAMPLES[sid]['emoji']}  {samples.SAMPLES[sid]['label']}",
+            key="sample_picker",
+        )
+        info = samples.SAMPLES[sample_id]
+        tier_color, tier_label = samples.TIER_BADGE.get(info["tier"], ("#64748b", info["tier"].upper()))
+        st.markdown(
+            f"""
+            <div style='display:flex;gap:8px;align-items:center;margin:4px 0 8px;'>
+              <span class='sev-badge' style='background:{tier_color}1a;color:{tier_color};'>{tier_label}</span>
+              <span style='font-size:13px;color:#64748b;'>{ORIGINS.get(info['origin'], info['origin'])} → {DESTINATIONS.get(info['destination'], info['destination'])}</span>
+            </div>
+            <div style='font-size:13px;color:#334155;line-height:1.5;margin-bottom:12px;'>{info['description']}</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        origin = info["origin"]
+        destination = info["destination"]
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            origin = st.selectbox(
+                s["origin_label"],
+                list(ORIGINS.keys()),
+                format_func=lambda k: ORIGINS[k],
+            )
+        with col2:
+            destination = st.selectbox(
+                s["dest_label"],
+                list(DESTINATIONS.keys()),
+                format_func=lambda k: DESTINATIONS[k],
+            )
         contract_file = st.file_uploader(
             s["upload_label"], type=["jpg", "jpeg", "png", "pdf"], accept_multiple_files=False
         )
-        if contract_file and contract_file.type.startswith("image/") and llm.PROVIDER == "claude_cli" \
+        if contract_file and contract_file.type.startswith("image/") \
+                and providers.default_provider() == "claude_cli" \
                 and not os.environ.get("ANTHROPIC_API_KEY"):
             st.warning(
                 "🔑 Image OCR uses Anthropic vision and needs `ANTHROPIC_API_KEY`. "
-                "Without it, mock OCR will be used. Upload a PDF or use the sample contract for full live behavior."
+                "Without it, mock OCR will be used. Upload a PDF or pick a sample for full live behaviour."
             )
 
     situation = st.text_area(s["situation_label"], height=100, placeholder="...")
@@ -341,6 +360,7 @@ def render_intake() -> dict[str, Any] | None:
             "origin": origin,
             "destination": destination,
             "source": source,
+            "sample_id": sample_id,
             "contract_file": contract_file,
             "contract_mime": contract_file.type if contract_file else None,
             "situation": situation,
