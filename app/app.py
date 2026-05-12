@@ -24,7 +24,7 @@ from typing import Any
 
 import streamlit as st
 
-from app import amendments, export, llm, ocr, providers, style
+from app import amendments, export, llm, ocr, providers, samples, style
 from app.agents import run_panel
 
 
@@ -167,27 +167,12 @@ SEVERITY_BADGE = {
 # ----------------------------------------------------------------------------
 # Sample contract loader
 # ----------------------------------------------------------------------------
-SAMPLES = {
-    ("PH", "SA"): Path(__file__).parent / "data" / "demo_contracts" / "ph_sa_domestic_worker.txt",
-    ("ID", "MY"): Path(__file__).parent / "data" / "demo_contracts" / "id_my_construction.txt",
-}
-
-
-def load_sample_contract(origin: str, destination: str) -> str:
-    path = SAMPLES.get((origin, destination))
-    if path and path.exists():
-        return path.read_text(encoding="utf-8")
-    # Fallback: PH→SA hero case
-    fallback = SAMPLES[("PH", "SA")]
-    if fallback.exists():
-        return fallback.read_text(encoding="utf-8")
+def load_sample_contract(sample_id: str) -> str:
+    text = samples.load(sample_id)
+    if text:
+        return text
     from app.llm import _MOCK_OCR
     return _MOCK_OCR
-
-
-def has_sample(origin: str, destination: str) -> bool:
-    path = SAMPLES.get((origin, destination))
-    return bool(path and path.exists())
 
 
 # ----------------------------------------------------------------------------
@@ -372,8 +357,8 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
     # ----- Step 1: OCR / load contract -----
     with st.status("📄 Reading contract…", expanded=True) as status:
         if intake["source"] == "sample":
-            contract_text = load_sample_contract(intake["origin"], intake["destination"])
-            source_label = "sample"
+            contract_text = load_sample_contract(intake.get("sample_id") or "ph_sa_domestic")
+            source_label = f"sample · {intake.get('sample_id')}"
         else:
             raw = intake["contract_file"].getvalue()
             contract_text, source_label = ocr.extract_text(raw, mime_hint=intake["contract_mime"])
