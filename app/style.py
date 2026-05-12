@@ -25,9 +25,18 @@ import streamlit as st
 
 
 def _render(html: str) -> None:
-    """Strip leading whitespace so Streamlit's markdown parser stops treating
-    indented HTML as a code block."""
-    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)
+    """Render an HTML block in Streamlit reliably.
+
+    Markdown ends an HTML block at the first blank line, after which any
+    following indented HTML becomes a code block. This kept biting us with
+    optional sections (e.g. empty corridor row). Defence in depth:
+      1. textwrap.dedent — strip the common Python-source indent
+      2. drop any line that's only whitespace
+      3. collapse to a single line — no markdown can interpose
+    """
+    lines = [l.strip() for l in textwrap.dedent(html).split('\n')]
+    collapsed = ''.join(l for l in lines if l)
+    st.markdown(collapsed, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Palette
