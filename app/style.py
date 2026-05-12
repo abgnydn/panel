@@ -19,7 +19,15 @@ Public API:
 """
 from __future__ import annotations
 
+import textwrap
+
 import streamlit as st
+
+
+def _render(html: str) -> None:
+    """Strip leading whitespace so Streamlit's markdown parser stops treating
+    indented HTML as a code block."""
+    st.markdown(textwrap.dedent(html).strip(), unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Palette
@@ -867,18 +875,15 @@ def top_bar(brand: str, crumb: str = "", status_label: str = "",
         f"<span class='pulse'></span>{status_label}</span>"
         if status_label else ""
     )
-    st.markdown(
-        f"""
-        <div class='panel-topbar'>
-          <div class='panel-topbar-left'>
-            <span class='panel-topbar-brand'><span class='dot'></span>Panel</span>
-            {crumb_html}
-          </div>
-          {status_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    _render(f"""
+    <div class='panel-topbar'>
+      <div class='panel-topbar-left'>
+        <span class='panel-topbar-brand'><span class='dot'></span>Panel</span>
+        {crumb_html}
+      </div>
+      {status_html}
+    </div>
+    """)
 
 
 _BRAND_MARK_SVG = """
@@ -914,23 +919,21 @@ def hero(title: str, subtitle: str, stats: list[tuple[str, str]] | None = None,
             f"<span class='corridor-chip'>{destination}</span>"
             f"</div>"
         )
-    mark_html = _BRAND_MARK_SVG if use_brand_mark else f"<span style='font-size:56px;'>{icon}</span>"
-    st.markdown(
-        f"""
-        <div class='panel-hero'>
-          <div class='panel-hero-row'>
-            <div class='panel-hero-mark'>{mark_html}</div>
-            <div>
-              <h1 class='panel-hero-title'>{title}</h1>
-              <p class='panel-hero-sub'>{subtitle}</p>
-            </div>
-          </div>
-          {corridor_html}
-          {stats_html}
+    mark_html = (_BRAND_MARK_SVG.strip() if use_brand_mark
+                  else f"<span style='font-size:56px;'>{icon}</span>")
+    _render(f"""
+    <div class='panel-hero'>
+      <div class='panel-hero-row'>
+        <div class='panel-hero-mark'>{mark_html}</div>
+        <div>
+          <h1 class='panel-hero-title'>{title}</h1>
+          <p class='panel-hero-sub'>{subtitle}</p>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+      </div>
+      {corridor_html}
+      {stats_html}
+    </div>
+    """)
 
 
 def segmented_progress(items: list[dict[str, str]]) -> None:
@@ -945,21 +948,18 @@ def segmented_progress(items: list[dict[str, str]]) -> None:
             f"<div class='seg-dot seg-{status}' style='--seg-tint: {tint};' title='{name}'>"
             f"<span class='seg-fill'></span><span class='seg-label'>{name}</span></div>"
         )
-    st.markdown(f"<div class='seg-progress'>{dots_html}</div>", unsafe_allow_html=True)
+    _render(f"<div class='seg-progress'>{dots_html}</div>")
 
 
 def section_heading(eyebrow: str, title: str, lede: str = "") -> None:
     lede_html = f"<p class='panel-section-lede'>{lede}</p>" if lede else ""
-    st.markdown(
-        f"""
-        <div class='panel-section'>
-          <div class='panel-section-eyebrow'><span class='dot'></span>{eyebrow}</div>
-          <div class='panel-section-title'>{title}</div>
-          {lede_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    _render(f"""
+    <div class='panel-section'>
+      <div class='panel-section-eyebrow'><span class='dot'></span>{eyebrow}</div>
+      <div class='panel-section-title'>{title}</div>
+      {lede_html}
+    </div>
+    """)
 
 
 def agent_card_waiting(emoji: str, name: str, tagline: str, status_msg: str,
@@ -1027,23 +1027,19 @@ def urgency_gauge(score: int, *, label: str = "Urgency",
     else:
         color = COLORS["status_ok"]
         verdict = "Low — contract is largely compliant"
-    st.markdown(
-        f"""
-        <div class='urgency-gauge'
-             style='--gauge-color: {color}; --gauge-pct: {pct}%;'>
-          <div class='urgency-gauge-number-wrap'>
-            <span class='urgency-gauge-number'>{score}</span>
-            <span class='urgency-gauge-suffix'>/{max_value}</span>
-          </div>
-          <div class='urgency-gauge-bar-wrap'>
-            <div class='urgency-gauge-label'>{label}</div>
-            <div class='urgency-gauge-bar'><div class='urgency-gauge-fill'></div></div>
-            <div class='urgency-gauge-verdict'>{verdict}</div>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    _render(f"""
+    <div class='urgency-gauge' style='--gauge-color: {color}; --gauge-pct: {pct}%;'>
+      <div class='urgency-gauge-number-wrap'>
+        <span class='urgency-gauge-number'>{score}</span>
+        <span class='urgency-gauge-suffix'>/{max_value}</span>
+      </div>
+      <div class='urgency-gauge-bar-wrap'>
+        <div class='urgency-gauge-label'>{label}</div>
+        <div class='urgency-gauge-bar'><div class='urgency-gauge-fill'></div></div>
+        <div class='urgency-gauge-verdict'>{verdict}</div>
+      </div>
+    </div>
+    """)
 
 
 def sev_pill(severity: int) -> str:
