@@ -1,0 +1,17 @@
+# Panel — Streamlit theme config.
+# Keep restrained: deep ink + a single accent red. Heavy lifting happens in
+# app/style.py via custom CSS injection.
+
+[theme]
+primaryColor          = "#dc2626"   # accent red — used for urgency / CTAs
+backgroundColor       = "#fafaf9"   # warm off-white page background
+secondaryBackgroundColor = "#ffffff" # sidebar + container surface
+textColor             = "#0f172a"   # deep ink for body text
+font                  = "sans serif"
+
+[server]
+maxUploadSize         = 20          # MB; contracts are tiny
+enableXsrfProtection  = true
+
+[browser]
+gatherUsageStats      = false

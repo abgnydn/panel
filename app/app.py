@@ -24,7 +24,7 @@ from typing import Any
 
 import streamlit as st
 
-from app import amendments, export, llm, ocr, providers
+from app import amendments, export, llm, ocr, providers, style
 from app.agents import run_panel
 
 
@@ -34,6 +34,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+style.inject()
 
 
 # ----------------------------------------------------------------------------
@@ -290,8 +292,16 @@ def render_intake() -> dict[str, Any] | None:
     )
     s = UI[lang_choice]
 
-    st.title(s["title"])
-    st.caption(s["subtitle"])
+    style.hero(
+        title=s["title"],
+        subtitle=s["subtitle"],
+        stats=[
+            ("Filipinos working abroad", "10M+"),
+            ("Indonesians leaving / year", "700K"),
+            ("legal aid before signing", "$0"),
+        ],
+        icon="⚖️",
+    )
 
     col1, col2 = st.columns(2)
     with col1:
@@ -376,22 +386,28 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
         st.text(contract_text[:3000] + ("…" if len(contract_text) > 3000 else ""))
 
     # ----- Step 2: launch panel with progress UI -----
-    st.subheader(s["reviewing"])
+    style.section_heading(
+        eyebrow="Round 1 · Panel review",
+        title=s["reviewing"],
+        lede="6 specialist agents analyse the contract in parallel. Each lights up "
+             "when its verdict lands. The slowest agent sets the wall clock.",
+    )
     n_agents = len(AGENT_DISPLAY)
     progress = st.progress(0.0, text=f"0 / {n_agents} agents completed")
-    # Two rows: 5 main + 1 wider for negotiator (or just one row of 6)
     panes = st.columns(n_agents)
     placeholders: dict[str, Any] = {}
     start_times: dict[str, float] = {}
 
     for pane, key in zip(panes, AGENT_DISPLAY.keys()):
         emoji, name, tagline = AGENT_DISPLAY[key]
+        tint = style.AGENT_TINTS.get(key, "#64748b")
         with pane:
-            st.markdown(f"### {emoji} {name}")
-            st.caption(tagline)
             placeholders[key] = st.empty()
             cycle = AGENT_STATUS_CYCLE.get(key, ["Working…"])
-            placeholders[key].info(f"⏳ {cycle[0]}")
+            placeholders[key].markdown(
+                style.agent_card_waiting(emoji, name, tagline, cycle[0], tint),
+                unsafe_allow_html=True,
+            )
             start_times[key] = time.time()
 
     completed: dict[str, dict] = {}
@@ -405,13 +421,14 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
             text=f"{completed_count[0]} / {n_agents} agents completed",
         )
         elapsed = (output.get("_latency_ms") or 0) / 1000.0
-        with placeholders[name].container():
-            head = f"✓ **{output.get('verdict_summary', '(no summary)')}**"
-            if elapsed > 0:
-                head += f"  \n*completed in {elapsed:.1f}s*"
-            st.markdown(head)
-            for finding in (output.get("key_findings") or [])[:4]:
-                st.markdown(f"- {finding}")
+        emoji, label, _tagline = AGENT_DISPLAY[name]
+        tint = style.AGENT_TINTS.get(name, "#64748b")
+        verdict = output.get("verdict_summary", "(no summary)")
+        findings = (output.get("key_findings") or [])[:4]
+        placeholders[name].markdown(
+            style.agent_card_done(emoji, label, elapsed, verdict, findings, tint),
+            unsafe_allow_html=True,
+        )
 
     # Run the panel
     result = run_panel(
@@ -427,10 +444,14 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
     for key in AGENT_DISPLAY:
         if key not in completed:
             output = result["agents"].get(key, {})
-            with placeholders[key].container():
-                st.markdown(f"**{output.get('verdict_summary', '(no summary)')}**")
-                for finding in (output.get("key_findings") or [])[:4]:
-                    st.markdown(f"- {finding}")
+            emoji, label, _tagline = AGENT_DISPLAY[key]
+            tint = style.AGENT_TINTS.get(key, "#64748b")
+            verdict = output.get("verdict_summary", "(no summary)")
+            findings = (output.get("key_findings") or [])[:4]
+            placeholders[key].markdown(
+                style.agent_card_done(emoji, label, None, verdict, findings, tint),
+                unsafe_allow_html=True,
+            )
 
     progress.empty()
     return result
@@ -441,56 +462,105 @@ def render_panel_review(intake: dict[str, Any]) -> dict[str, Any]:
 # ----------------------------------------------------------------------------
 def render_disagreement_reel(result: dict[str, Any], lang: str) -> None:
     s = UI[lang]
-    st.divider()
-    st.subheader(s["disagree_header"])
-
     reel = result["disagreement_reel"]
+
+    style.section_heading(
+        eyebrow="The moat",
+        title=s["disagree_header"],
+        lede="Top tensions where the panel diverges. Differentiated by severity. "
+             "The hero card is the strongest signal in the contract.",
+    )
+
     if not reel:
         st.info("The panel reached consensus — no significant disagreements detected.")
         return
 
-    # Hero (#1) — colored container, large header
     hero = reel[0]
-    badge_emoji, badge_color, badge_label = _badge_for(hero.get("severity", 5))
-    with st.container(border=True):
-        st.markdown(
-            f"<div style='border-left:6px solid {badge_color};padding:8px 16px;background:rgba(211,47,47,0.05);'>"
-            f"<div style='font-size:11px;letter-spacing:1px;color:{badge_color};font-weight:700;'>"
-            f"{badge_emoji} #{hero['rank']} · {badge_label}</div>"
-            f"<div style='font-size:22px;font-weight:600;margin-top:4px;'>{hero['topic']}</div>"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-        st.write("")
-        for tension in hero["tensions"]:
-            _render_tension(tension)
-        st.caption(f"_{hero['why_it_matters']}_")
+    sev = hero.get("severity", 5)
+    tint, tint_soft, badge_label = _sev_palette(sev)
+    badge_emoji, _, _ = _badge_for(sev)
+    tensions_html = _tensions_html(hero["tensions"], compact=False)
+    st.markdown(
+        f"""
+        <div class='reel-hero' style='--reel-tint: {tint}; --reel-tint-soft: {tint_soft};'>
+          <div class='reel-rank'>#{hero['rank']} of {len(reel)}</div>
+          <div class='reel-badge'>{badge_emoji} {badge_label}</div>
+          <div class='reel-topic'>{hero['topic']}</div>
+          <div class='reel-tensions'>{tensions_html}</div>
+          <div class='reel-meaning'>{hero.get('why_it_matters', '')}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    # Supporting (#2, #3) — side by side
     if len(reel) >= 2:
-        st.write("")
-        cols = st.columns(min(2, len(reel) - 1))
-        for col, item in zip(cols, reel[1:3]):
-            badge_emoji, badge_color, badge_label = _badge_for(item.get("severity", 5))
+        sub = reel[1:3]
+        cols = st.columns(len(sub))
+        for col, item in zip(cols, sub):
+            sev = item.get("severity", 5)
+            tint, tint_soft, badge_label = _sev_palette(sev)
+            badge_emoji, _, _ = _badge_for(sev)
+            tensions_html = _tensions_html(item["tensions"][:3], compact=True)
             with col:
-                with st.container(border=True):
-                    st.markdown(
-                        f"<div style='font-size:10px;letter-spacing:1px;color:{badge_color};font-weight:700;'>"
-                        f"{badge_emoji} #{item['rank']} · {badge_label}</div>"
-                        f"<div style='font-size:16px;font-weight:600;margin-top:2px;'>{item['topic']}</div>",
-                        unsafe_allow_html=True,
-                    )
-                    st.write("")
-                    for tension in item["tensions"][:3]:
-                        _render_tension(tension, compact=True)
-                    st.caption(f"_{item['why_it_matters']}_")
+                st.markdown(
+                    f"""
+                    <div class='reel-sub' style='--reel-tint: {tint}; --reel-tint-soft: {tint_soft};'>
+                      <div class='reel-rank'>#{item['rank']}</div>
+                      <div class='reel-badge'>{badge_emoji} {badge_label}</div>
+                      <div class='reel-topic'>{item['topic']}</div>
+                      <div class='reel-tensions'>{tensions_html}</div>
+                      <div class='reel-meaning'>{item.get('why_it_matters', '')}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+
+def _sev_palette(severity: int) -> tuple[str, str, str]:
+    """Return (tint, tint_soft, label) for a severity tier."""
+    key = max(5, min(10, int(severity)))
+    color_map = {
+        10: (style.COLORS["sev_10"], "#fee2e2", "CRITICAL"),
+        9:  (style.COLORS["sev_9"],  "#fee2e2", "EMERGENCY"),
+        8:  (style.COLORS["sev_8"],  "#ffedd5", "HIGH · legal but dangerous"),
+        7:  (style.COLORS["sev_7"],  "#fef3c7", "HIGH · gray area"),
+        6:  (style.COLORS["sev_6"],  "#fef9c3", "MEDIUM · international gap"),
+        5:  (style.COLORS["sev_5"],  "#f1f5f9", "PRE-DECLARED"),
+    }
+    return color_map.get(key, color_map[5])
 
 
 def _badge_for(severity: int) -> tuple[str, str, str]:
     return SEVERITY_BADGE.get(severity, SEVERITY_BADGE[5])
 
 
+def _tensions_html(tensions: list, *, compact: bool) -> str:
+    pieces: list[str] = []
+    for t in tensions:
+        if not isinstance(t, dict):
+            continue
+        agent_key = t.get("agent", "")
+        display = AGENT_DISPLAY.get(agent_key)
+        verdict = t.get("verdict") or "(no verdict)"
+        if compact and len(verdict) > 140:
+            verdict = verdict[:137] + "…"
+        if display:
+            emoji, name, _ = display
+            tint = style.AGENT_TINTS.get(agent_key, "#64748b")
+            agent_html = f"{emoji} {name}"
+        else:
+            tint = "#64748b"
+            agent_html = agent_key
+        pieces.append(
+            f"<div class='reel-tension' style='--tension-tint: {tint};'>"
+            f"<div class='reel-tension-agent'>{agent_html}</div>"
+            f"<div class='reel-tension-verdict'>{verdict}</div></div>"
+        )
+    return "".join(pieces)
+
+
 def _render_tension(tension: dict, *, compact: bool = False) -> None:
+    """Legacy fallback for non-reel tension rendering."""
     agent_key = tension["agent"]
     display = AGENT_DISPLAY.get(agent_key)
     verdict = tension.get("verdict") or "(no verdict)"
@@ -553,11 +623,12 @@ def render_rebuttals(result: dict[str, Any]) -> None:
     rebuttals = result.get("rebuttals") or {}
     if not rebuttals or rebuttals.get("_error"):
         return
-    st.divider()
-    st.subheader("🎙️ Round 2 · Panel reacts to itself")
-    st.caption(
-        "After Round 1, each agent saw the others' findings. "
-        "Here's where they concede, push back, or extend the panel's analysis."
+    style.section_heading(
+        eyebrow="Round 2 · The panel debates",
+        title="🎙️ Where the panel pushes back",
+        lede="After Round 1, each agent saw the others' findings and reacted. "
+             "Watch the Lawyer concede to the Peer Advocate — that's the moment "
+             "Panel earns its name.",
     )
     cols = st.columns(len(AGENT_DISPLAY))
     for col, agent_key in zip(cols, AGENT_DISPLAY.keys()):
@@ -569,18 +640,22 @@ def render_rebuttals(result: dict[str, Any]) -> None:
         s_emoji, s_color, s_label = STANCE_BADGE.get(stance, STANCE_BADGE["extend"])
         responds_to = (out.get("responds_to") or "").strip()
         rebuttal_text = (out.get("rebuttal") or "").strip()
+        responds_html = (
+            f"<div class='rebuttal-responds'>→ {responds_to}</div>" if responds_to else ""
+        )
+        rebuttal_html = f"<div class='rebuttal-text'>{rebuttal_text}</div>" if rebuttal_text else ""
         with col:
-            with st.container(border=True):
-                st.markdown(f"**{emoji} {name}**")
-                st.markdown(
-                    f"<span style='color:{s_color};font-size:11px;letter-spacing:1px;font-weight:700;'>"
-                    f"{s_emoji} {s_label.upper()}</span>",
-                    unsafe_allow_html=True,
-                )
-                if responds_to:
-                    st.caption(f"→ {responds_to}")
-                if rebuttal_text:
-                    st.markdown(f"*{rebuttal_text}*")
+            st.markdown(
+                f"""
+                <div class='rebuttal-card' style='--stance-tint: {s_color};'>
+                  <div class='rebuttal-agent'>{emoji} {name}</div>
+                  <div class='rebuttal-stance'>{s_emoji} {s_label}</div>
+                  {responds_html}
+                  {rebuttal_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_checklist(result: dict[str, Any], lang: str) -> None:

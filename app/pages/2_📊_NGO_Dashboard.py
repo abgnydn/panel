@@ -20,17 +20,19 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from app import store
+from app import store, style
 from app.agents.base import load_data
 
 
 st.set_page_config(page_title="Panel · NGO Dashboard", page_icon="📊", layout="wide")
+style.inject()
 
-st.title("📊 NGO Dashboard")
-st.caption(
-    "Aggregate view across all Panel sessions. With each worker's consent, "
-    "anonymized findings join the case archive — turning one contract review "
-    "into systemic intelligence."
+style.hero(
+    title="NGO Dashboard",
+    subtitle="Aggregate view across every Panel session. With each worker's consent, "
+             "anonymized findings join the case archive — turning one contract review "
+             "into systemic intelligence.",
+    icon="📊",
 )
 
 # ----------------------------------------------------------------------------

@@ -18,14 +18,18 @@ if str(_ROOT) not in sys.path:
 import pandas as pd
 import streamlit as st
 
+from app import style
 from app.agents import run_panel
 
 st.set_page_config(page_title="Panel · Quality Battery", page_icon="🧪", layout="wide")
+style.inject()
 
-st.title("🧪 Quality Battery")
-st.caption(
-    "Panel run on four contracts spanning the quality spectrum. "
-    "Demonstrates the system's behavioral range — not hardcoded to one demo case."
+style.hero(
+    title="Quality Battery",
+    subtitle="Panel run on four contracts spanning the quality spectrum — "
+             "clean reference, mild gray-area, hero demo, extreme trafficking. "
+             "Demonstrates behavioral range, not hardcoded behaviour.",
+    icon="🧪",
 )
 
 BATTERY = [
