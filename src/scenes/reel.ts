@@ -70,8 +70,8 @@ export function renderReel(ctx: SceneCtx): void {
     </section>
   `;
 
-  root.querySelector<HTMLButtonElement>("#back")!.addEventListener("click", () => goto("deliberation"));
-  root.querySelector<HTMLButtonElement>("#continue")!.addEventListener("click", () => goto("recommendation" as never));
+  root.querySelector<HTMLButtonElement>("#back")!.addEventListener("click", () => goto("rebuttals"));
+  root.querySelector<HTMLButtonElement>("#continue")!.addEventListener("click", () => goto("negotiation"));
 
   gsap.fromTo(".reel-head",
     { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", clearProps: "transform" });

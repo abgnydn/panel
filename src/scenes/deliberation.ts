@@ -104,7 +104,7 @@ export function renderDeliberation(ctx: SceneCtx): void {
 
   root.querySelector<HTMLButtonElement>("#back")!.addEventListener("click", () => goto("intake"));
   const cont = root.querySelector<HTMLButtonElement>("#continue")!;
-  cont.addEventListener("click", () => goto("reel" as never));
+  cont.addEventListener("click", () => goto("rebuttals"));
 
   // Entrance
   gsap.fromTo(".delib-head",
