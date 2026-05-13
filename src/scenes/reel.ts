@@ -9,6 +9,9 @@ import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
 import type { ReelItem } from "../api/mock-result";
+import { AGENT_BY_ID, agentIconHtml } from "../ui/agents";
+import type { AgentId } from "../ui/agents";
+import { icon } from "../ui/icons";
 import type { SceneCtx } from "./router";
 
 const SEVERITY_LABEL: Record<number, string> = {
@@ -27,15 +30,6 @@ const SEVERITY_TINT: Record<number, [string, string]> = {
   7:  ["#f59e0b", "#fef3c7"],
   6:  ["#eab308", "#fef9c3"],
   5:  ["#737373", "#f1f5f9"],
-};
-
-const AGENT_DISPLAY: Record<string, { emoji: string; name: string; tint: string }> = {
-  lawyer:        { emoji: "⚖️",   name: "Lawyer",        tint: "var(--agent-lawyer)" },
-  translator:    { emoji: "🌐",   name: "Translator",    tint: "var(--agent-translator)" },
-  regulator:     { emoji: "🏛️",  name: "Regulator",     tint: "var(--agent-regulator)" },
-  peer_advocate: { emoji: "🫱🏽‍🫲🏾", name: "Peer Advocate", tint: "var(--agent-peer)" },
-  triage:        { emoji: "🚨",   name: "Triage",        tint: "var(--agent-triage)" },
-  negotiator:    { emoji: "💬",   name: "Negotiator",    tint: "var(--agent-negotiator)" },
 };
 
 export function renderReel(ctx: SceneCtx): void {
@@ -59,12 +53,10 @@ export function renderReel(ctx: SceneCtx): void {
       <div class="reel-sub-grid">${sub.map(subCardHtml).join("")}</div>
 
       <footer class="delib-foot">
-        <button class="cta-ghost" id="back">← Back</button>
+        <button class="cta-ghost" id="back">${icon("arrow_left", "icon-sm")}<span>Back</span></button>
         <button class="cta" id="continue">
-          <span>See your recommendation</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>See how to negotiate</span>
+          ${icon("arrow_right", "icon-sm")}
         </button>
       </footer>
     </section>
@@ -121,7 +113,7 @@ function subCardHtml(item: ReelItem): string {
 }
 
 function tensionHtml(t: { agent: string; verdict: string }): string {
-  const d = AGENT_DISPLAY[t.agent];
+  const d = AGENT_BY_ID[t.agent as AgentId];
   if (!d) {
     return `<div class="reel-tension" style="--t-tint:#64748b;">
       <div class="reel-tension-agent">${t.agent}</div>
@@ -130,7 +122,10 @@ function tensionHtml(t: { agent: string; verdict: string }): string {
   }
   return `
     <div class="reel-tension" style="--t-tint:${d.tint};">
-      <div class="reel-tension-agent">${d.emoji} ${d.name}</div>
+      <div class="reel-tension-agent">
+        <span class="reel-tension-icon" style="color:${d.tint};">${agentIconHtml(d.id, "icon-sm")}</span>
+        ${d.name}
+      </div>
       <div class="reel-tension-verdict">${t.verdict}</div>
     </div>
   `;

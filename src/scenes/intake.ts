@@ -150,12 +150,11 @@ export function renderIntake(ctx: SceneCtx): void {
 function sampleCardHtml(s: Sample): string {
   const t = TIER_BADGE[s.tier];
   return `
-    <button class="sample-card" data-sample-id="${s.id}">
+    <button class="sample-card" data-sample-id="${s.id}" style="--tier-fg:${t.fg};">
       <div class="sample-card-head">
         <span class="tier-badge" style="--tier-fg:${t.fg};--tier-bg:${t.bg};">
           <span class="dot"></span>${t.label}
         </span>
-        <span class="sample-emoji">${s.emoji}</span>
       </div>
       <div class="sample-corridor">${s.origin_label} <span class="arrow">→</span> ${s.destination_label}</div>
       <div class="sample-label">${s.label.replace(/^.*?·\s*/, "")}</div>

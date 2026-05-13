@@ -82,6 +82,12 @@ main {
   font-feature-settings: "tnum", "ss01";
 }
 
+/* Icon sizing — SVGs inherit currentColor */
+.icon-sm { width: 18px; height: 18px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.icon-md { width: 22px; height: 22px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.icon-lg { width: 28px; height: 28px; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.icon-xl { width: 36px; height: 36px; display: inline-block; flex-shrink: 0; }
+
 /* ============================================================================
    Cold open
    ============================================================================ */
@@ -190,32 +196,64 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
-/* CTA */
-.cta {
-  margin-top: 44px;
+/* ---------------------------------------------------------------------------
+   Buttons — unified sizing so .cta and .cta-ghost always line up
+   --------------------------------------------------------------------------- */
+.cta,
+.cta-ghost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 14px 26px;
+  height: 46px;
+  padding: 0 22px;
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  color: #fff;
-  background: var(--ink);
-  border: none;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: background 200ms var(--easing), box-shadow 200ms var(--easing);
+  border: 1px solid transparent;
+  transition: all 200ms var(--easing);
   will-change: transform;
+  white-space: nowrap;
+}
+.cta {
+  color: #fff;
+  background: var(--ink);
+  box-shadow: var(--shadow-sm);
 }
 .cta:hover {
   background: #1e293b;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
 }
-.cta svg { transition: transform 200ms var(--easing); }
+.cta:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.6;
+}
+.cta-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border-color: var(--border);
+}
+.cta-ghost:hover {
+  background: var(--surface);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.cta svg, .cta-ghost svg { transition: transform 200ms var(--easing); }
 .cta:hover svg { transform: translateX(3px); }
+
+/* Cold-open's hero CTA gets a touch more presence + the top spacing */
+.cold-open .cta {
+  margin-top: 44px;
+  height: 50px;
+  padding: 0 26px;
+  font-size: 15px;
+  box-shadow: var(--shadow-md);
+}
 
 /* Reduced-motion fallback */
 @media (prefers-reduced-motion: reduce) {
@@ -377,9 +415,15 @@ main {
   align-items: flex-start;
   gap: 8px;
 }
-.sample-emoji {
-  font-size: 28px;
-  line-height: 1;
+/* .sample-emoji removed — sample cards now use tier-fg color bar */
+.sample-card { position: relative; padding-left: 22px; }
+.sample-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 18px; bottom: 18px;
+  width: 4px;
+  background: var(--tier-fg);
+  border-radius: 0 4px 4px 0;
 }
 .tier-badge {
   display: inline-flex;
@@ -508,19 +552,13 @@ main {
   background-position: right 12px center;
 }
 
-.cta:disabled {
-  background: var(--muted);
-  cursor: not-allowed;
-  box-shadow: none;
-  opacity: 0.7;
-}
 .cta.is-ready {
   animation: ctaReady 1.5s ease-in-out;
 }
 @keyframes ctaReady {
-  0%   { box-shadow: var(--shadow-md); }
-  50%  { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.12), var(--shadow-md); }
-  100% { box-shadow: var(--shadow-md); }
+  0%   { box-shadow: var(--shadow-sm); }
+  50%  { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.12), var(--shadow-sm); }
+  100% { box-shadow: var(--shadow-sm); }
 }
 
 /* ============================================================================
@@ -593,15 +631,31 @@ main {
   gap: 12px;
 }
 .agent-pane-avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--agent-tint) 10%, transparent);
+  color: var(--agent-tint);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  flex-shrink: 0;
 }
+.rebuttal-agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rebuttal-agent-icon {
+  display: inline-flex;
+  align-items: center;
+}
+.reel-tension-agent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.reel-tension-icon { display: inline-flex; }
 .agent-pane-name {
   font-size: 14.5px;
   font-weight: 700;
@@ -658,22 +712,11 @@ main {
   align-items: center;
   gap: 16px;
   padding: 4px;
+  margin-top: 8px;
 }
-.cta-ghost {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink-soft);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 10px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 200ms var(--easing);
-}
-.cta-ghost:hover {
-  background: var(--surface);
-  border-color: var(--ink);
+.delib-foot .cta,
+.delib-foot .cta-ghost {
+  flex: 0 0 auto;
 }
 .hint {
   font-size: 12px;
@@ -1246,11 +1289,12 @@ main {
   overflow: hidden;
 }
 .neg-priority::before {
-  content: "🎯";
+  content: '';
   position: absolute;
-  top: 18px; right: 22px;
-  font-size: 22px;
-  opacity: 0.5;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
 }
 .neg-priority-head { margin-bottom: 14px; }
 .neg-priority-tag {

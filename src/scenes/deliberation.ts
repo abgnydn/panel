@@ -17,16 +17,9 @@ import { MOCK_RESULT } from "../api/mock-result";
 import type { AgentOutput } from "../api/mock-result";
 import { Store } from "../state";
 import { LANGUAGES } from "../data/samples";
+import { AGENTS, agentIconHtml } from "../ui/agents";
+import { icon } from "../ui/icons";
 import type { SceneCtx } from "./router";
-
-const AGENTS = [
-  { id: "lawyer",        emoji: "⚖️",   name: "Lawyer",        tagline: "Local labor law",            tint: "var(--agent-lawyer)" },
-  { id: "translator",    emoji: "🌐",   name: "Translator",    tagline: "Plain language in your L1",  tint: "var(--agent-translator)" },
-  { id: "regulator",     emoji: "🏛️",  name: "Regulator",     tagline: "ILO / ASEAN standards",      tint: "var(--agent-regulator)" },
-  { id: "peer_advocate", emoji: "🫱🏽‍🫲🏾", name: "Peer Advocate", tagline: "Similar past cases",        tint: "var(--agent-peer)" },
-  { id: "triage",        emoji: "🚨",   name: "Triage",        tagline: "Urgency & contacts",         tint: "var(--agent-triage)" },
-  { id: "negotiator",    emoji: "💬",   name: "Negotiator",    tagline: "What to say before signing", tint: "var(--agent-negotiator)" },
-];
 
 // Reveal cadence (seconds). Spread chosen to mimic the real-claude wall clock
 // without being painfully slow. Earliest at 1.5s, latest at 4.5s.
@@ -55,7 +48,7 @@ export function renderDeliberation(ctx: SceneCtx): void {
   const panesHtml = AGENTS.map((a) => `
     <div class="agent-pane" data-agent="${a.id}" style="--agent-tint:${a.tint};">
       <div class="agent-pane-head">
-        <div class="agent-pane-avatar">${a.emoji}</div>
+        <div class="agent-pane-avatar">${agentIconHtml(a.id, "icon-md")}</div>
         <div>
           <div class="agent-pane-name">${a.name}</div>
           <div class="agent-pane-tagline">${a.tagline}</div>
@@ -93,10 +86,8 @@ export function renderDeliberation(ctx: SceneCtx): void {
       <footer class="delib-foot">
         <button class="cta-ghost" id="back">← Back</button>
         <button class="cta" id="continue" disabled>
-          <span>See where the panel disagrees</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>See the panel react</span>
+          ${icon("arrow_right", "icon-sm")}
         </button>
       </footer>
     </section>

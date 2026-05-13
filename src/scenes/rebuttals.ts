@@ -10,21 +10,15 @@ import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
 import type { Rebuttal } from "../api/mock-result";
+import { AGENT_BY_ID, agentIconHtml } from "../ui/agents";
+import type { AgentId } from "../ui/agents";
+import { icon } from "../ui/icons";
 import type { SceneCtx } from "./router";
 
-const AGENT_DISPLAY: Record<string, { emoji: string; name: string; tint: string }> = {
-  lawyer:        { emoji: "⚖️",   name: "Lawyer",        tint: "var(--agent-lawyer)" },
-  translator:    { emoji: "🌐",   name: "Translator",    tint: "var(--agent-translator)" },
-  regulator:     { emoji: "🏛️",  name: "Regulator",     tint: "var(--agent-regulator)" },
-  peer_advocate: { emoji: "🫱🏽‍🫲🏾", name: "Peer Advocate", tint: "var(--agent-peer)" },
-  triage:        { emoji: "🚨",   name: "Triage",        tint: "var(--agent-triage)" },
-  negotiator:    { emoji: "💬",   name: "Negotiator",    tint: "var(--agent-negotiator)" },
-};
-
-const STANCE: Record<Rebuttal["stance"], { color: string; label: string; icon: string }> = {
-  concede:   { color: "var(--stance-concede)",   label: "Concedes",    icon: "🤝" },
-  push_back: { color: "var(--stance-push_back)", label: "Pushes back", icon: "⚔️" },
-  extend:    { color: "var(--stance-extend)",    label: "Extends",     icon: "➕" },
+const STANCE: Record<Rebuttal["stance"], { color: string; label: string; iconKey: "concede" | "push_back" | "extend" }> = {
+  concede:   { color: "var(--stance-concede)",   label: "Concedes",    iconKey: "concede" },
+  push_back: { color: "var(--stance-push_back)", label: "Pushes back", iconKey: "push_back" },
+  extend:    { color: "var(--stance-extend)",    label: "Extends",     iconKey: "extend" },
 };
 
 export function renderRebuttals(ctx: SceneCtx): void {
@@ -49,12 +43,10 @@ export function renderRebuttals(ctx: SceneCtx): void {
       <div class="rebuttal-grid">${cards}</div>
 
       <footer class="delib-foot">
-        <button class="cta-ghost" id="back">← Back to deliberation</button>
+        <button class="cta-ghost" id="back">${icon("arrow_left", "icon-sm")}<span>Back to deliberation</span></button>
         <button class="cta" id="continue">
           <span>See where the panel disagrees</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/></svg>
+          ${icon("arrow_right", "icon-sm")}
         </button>
       </footer>
     </section>
@@ -73,14 +65,19 @@ export function renderRebuttals(ctx: SceneCtx): void {
 }
 
 function rebuttalCardHtml(r: Rebuttal): string {
-  const agent = AGENT_DISPLAY[r.agent] ?? { emoji: "", name: r.agent, tint: "var(--ink-soft)" };
+  const agent = AGENT_BY_ID[r.agent as AgentId];
   const stance = STANCE[r.stance];
   const respondsLabel = r.responds_to.toUpperCase().replace("_", " ");
+  const agentTint = agent?.tint ?? "var(--ink-soft)";
+  const agentName = agent?.name ?? r.agent;
   return `
-    <article class="rebuttal-card" style="--stance:${stance.color};--agent-tint:${agent.tint};">
+    <article class="rebuttal-card" style="--stance:${stance.color};--agent-tint:${agentTint};">
       <header class="rebuttal-card-head">
-        <div class="rebuttal-agent">${agent.emoji} ${agent.name}</div>
-        <span class="rebuttal-stance"><span class="dot"></span>${stance.icon} ${stance.label}</span>
+        <div class="rebuttal-agent">
+          <span class="rebuttal-agent-icon" style="color:${agentTint};">${agent ? agentIconHtml(agent.id, "icon-sm") : ""}</span>
+          ${agentName}
+        </div>
+        <span class="rebuttal-stance">${icon(stance.iconKey, "icon-sm")} ${stance.label}</span>
       </header>
       <div class="rebuttal-responds">→ ${respondsLabel}</div>
       <p class="rebuttal-text">${r.rebuttal}</p>

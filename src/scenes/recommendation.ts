@@ -24,7 +24,10 @@ import {
 } from "../lib/export";
 import { Store } from "../state";
 import { LANGUAGES } from "../data/samples";
+import { icon, type IconKey } from "../ui/icons";
 import type { SceneCtx } from "./router";
+
+const iconRef = (k: IconKey): string => icon(k, "icon-sm");
 
 const PHASE_LABEL: Record<keyof typeof MOCK_RESULT.checklist, string> = {
   before_departure: "Before departure",
@@ -202,7 +205,7 @@ function checklistSectionHtml(): string {
 
   return `
     <section class="rec-block rec-checklist">
-      <h3 class="rec-block-title">📋 Pre-departure checklist · save offline</h3>
+      <h3 class="rec-block-title">Pre-departure checklist · save offline</h3>
       <div class="chk-tabs">${tabsHtml}</div>
       <div class="chk-panels">${panelsHtml}</div>
     </section>
@@ -226,7 +229,7 @@ function refusalsSectionHtml(): string {
   if (!MOCK_RESULT.refusals.length) return "";
   return `
     <section class="rec-block rec-refusals">
-      <h3 class="rec-block-title">🛑 Do NOT agree to</h3>
+      <h3 class="rec-block-title">Do <em>not</em> agree to</h3>
       <div class="refusal-list">
         ${MOCK_RESULT.refusals.map((r) => `
           <article class="refusal-card">
@@ -243,7 +246,7 @@ function pushbacksSectionHtml(): string {
   if (!MOCK_RESULT.pushbacks.length) return "";
   return `
     <section class="rec-block rec-pushbacks">
-      <h3 class="rec-block-title">📝 Ask the recruiter to change before signing</h3>
+      <h3 class="rec-block-title">Ask the recruiter to change before signing</h3>
       <div class="pushback-list">
         ${MOCK_RESULT.pushbacks.map((p) => `
           <article class="pushback-card">
@@ -272,7 +275,7 @@ function whatIfSectionHtml(urgency: number): string {
   `).join("");
   return `
     <section class="rec-block rec-whatif">
-      <h3 class="rec-block-title">🪄 What if the recruiter agrees?</h3>
+      <h3 class="rec-block-title">What if the recruiter agrees?</h3>
       <p class="rec-block-lede">Tick the amendments you'd ask for, then simulate.
         See how your urgency score drops as each one is accepted.</p>
       <div class="whatif-controls">${checks}</div>
@@ -301,17 +304,17 @@ function whatIfSectionHtml(urgency: number): string {
 function exportSectionHtml(): string {
   return `
     <section class="rec-block rec-export">
-      <h3 class="rec-block-title">📥 Take it with you</h3>
+      <h3 class="rec-block-title">Take it with you</h3>
       <p class="rec-block-lede">Save this letter offline before you fly. Print, screenshot, share via WhatsApp, or scan the QR with a peer's phone to copy the embassy contact in one tap.</p>
       <div class="export-row">
-        <button class="cta-ghost" id="export-pdf"><span>↓ PDF</span></button>
-        <button class="cta-ghost" id="export-md"><span>↓ Markdown</span></button>
-        <button class="cta-ghost" id="export-wa"><span>↗ Share on WhatsApp</span></button>
-        <button class="cta-ghost" id="export-qr"><span>⌬ Show QR</span></button>
+        <button class="cta-ghost" id="export-pdf">${iconRef("download")}<span>PDF</span></button>
+        <button class="cta-ghost" id="export-md">${iconRef("download")}<span>Markdown</span></button>
+        <button class="cta-ghost" id="export-wa">${iconRef("share")}<span>Share via WhatsApp</span></button>
+        <button class="cta-ghost" id="export-qr">${iconRef("qr")}<span>Show QR</span></button>
       </div>
       <div class="export-deeper">
         <button class="cta-ghost" id="go-dashboard">
-          <span>🌍 See the systemic view — NGO Dashboard</span>
+          <span>See the systemic view · NGO Dashboard</span>
         </button>
       </div>
     </section>
