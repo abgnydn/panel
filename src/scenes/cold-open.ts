@@ -10,6 +10,8 @@
  */
 import { gsap } from "gsap";
 
+import type { SceneCtx } from "./router";
+
 const BRAND_MARK_SVG = `
 <svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
   <rect x="4"  y="34" width="7" height="34" rx="2" fill="var(--agent-lawyer)"/>
@@ -43,7 +45,8 @@ const STATS: Array<{ target: number; suffix: string; label: string; format?: (n:
   },
 ];
 
-export function renderColdOpen(root: HTMLElement): void {
+export function renderColdOpen(ctx: SceneCtx): void {
+  const { root, goto } = ctx;
   const letters = [..."Panel"]
     .map((ch) => `<span class="letter">${ch}</span>`)
     .join("");
@@ -165,10 +168,7 @@ export function renderColdOpen(root: HTMLElement): void {
       }
     }
 
-    cta.addEventListener("click", () => {
-      // Placeholder — next scene wires the intake.
-      cta.textContent = "Loading intake…";
-    });
+    cta.addEventListener("click", () => goto("intake"));
   }
 }
 
