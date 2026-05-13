@@ -14,6 +14,7 @@ import { renderRebuttals } from "./rebuttals";
 import { renderReel } from "./reel";
 import { renderNegotiation } from "./negotiation";
 import { renderRecommendation } from "./recommendation";
+import { renderDashboard } from "./dashboard";
 
 export type SceneId =
   | "cold-open"
@@ -22,7 +23,8 @@ export type SceneId =
   | "rebuttals"
   | "reel"
   | "negotiation"
-  | "recommendation";
+  | "recommendation"
+  | "dashboard";
 
 export type SceneCtx = {
   root: HTMLElement;
@@ -50,6 +52,7 @@ export function mountRouter(root: HTMLElement): void {
         else if (next === "reel") renderReel(ctx);
         else if (next === "negotiation") renderNegotiation(ctx);
         else if (next === "recommendation") renderRecommendation(ctx);
+        else if (next === "dashboard") renderDashboard(ctx);
         gsap.fromTo(
           root,
           { opacity: 0, y: 8 },

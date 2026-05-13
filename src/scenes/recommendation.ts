@@ -16,6 +16,12 @@ import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
 import type { ChecklistItem } from "../api/mock-result";
+import {
+  downloadMarkdown as exportMarkdown,
+  downloadPDF,
+  generateQRDataURL,
+  whatsappShareURL,
+} from "../lib/export";
 import { Store } from "../state";
 import { LANGUAGES } from "../data/samples";
 import type { SceneCtx } from "./router";
@@ -123,7 +129,20 @@ export function renderRecommendation(ctx: SceneCtx): void {
   });
 
   // ---- Export -------------------------------------------------------------
-  root.querySelector<HTMLButtonElement>("#export-md")!.addEventListener("click", () => downloadMarkdown());
+  const lang = intake.language;
+  root.querySelector<HTMLButtonElement>("#export-md")!
+    .addEventListener("click", () => exportMarkdown(MOCK_RESULT, lang));
+  root.querySelector<HTMLButtonElement>("#export-pdf")!
+    .addEventListener("click", () => downloadPDF(MOCK_RESULT, lang));
+  root.querySelector<HTMLButtonElement>("#export-wa")!
+    .addEventListener("click", () => { window.open(whatsappShareURL(MOCK_RESULT), "_blank"); });
+  root.querySelector<HTMLButtonElement>("#export-qr")!
+    .addEventListener("click", async () => {
+      const dataUrl = await generateQRDataURL(MOCK_RESULT);
+      openQRModal(dataUrl);
+    });
+  root.querySelector<HTMLButtonElement>("#go-dashboard")!
+    .addEventListener("click", () => goto("dashboard"));
 
   // ---- Entrance animations ------------------------------------------------
   gsap.fromTo(".rec-head",        { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", clearProps: "transform" });
@@ -283,20 +302,42 @@ function exportSectionHtml(): string {
   return `
     <section class="rec-block rec-export">
       <h3 class="rec-block-title">📥 Take it with you</h3>
-      <p class="rec-block-lede">Save this letter offline before you fly. Print, screenshot, share via WhatsApp.</p>
+      <p class="rec-block-lede">Save this letter offline before you fly. Print, screenshot, share via WhatsApp, or scan the QR with a peer's phone to copy the embassy contact in one tap.</p>
       <div class="export-row">
-        <button class="cta-ghost" id="export-md">
-          <span>↓ Download Markdown</span>
-        </button>
-        <button class="cta-ghost" id="export-qr-stub" disabled>
-          <span>↓ Generate QR (coming soon)</span>
-        </button>
-        <button class="cta-ghost" id="export-pdf-stub" disabled>
-          <span>↓ Generate PDF (coming soon)</span>
+        <button class="cta-ghost" id="export-pdf"><span>↓ PDF</span></button>
+        <button class="cta-ghost" id="export-md"><span>↓ Markdown</span></button>
+        <button class="cta-ghost" id="export-wa"><span>↗ Share on WhatsApp</span></button>
+        <button class="cta-ghost" id="export-qr"><span>⌬ Show QR</span></button>
+      </div>
+      <div class="export-deeper">
+        <button class="cta-ghost" id="go-dashboard">
+          <span>🌍 See the systemic view — NGO Dashboard</span>
         </button>
       </div>
     </section>
   `;
+}
+
+function openQRModal(dataUrl: string): void {
+  const existing = document.getElementById("qr-modal");
+  if (existing) existing.remove();
+  const div = document.createElement("div");
+  div.id = "qr-modal";
+  div.className = "qr-modal";
+  div.innerHTML = `
+    <div class="qr-modal-card">
+      <button class="qr-modal-close" aria-label="Close">×</button>
+      <h3>Scan to save the embassy contact</h3>
+      <p>Encoded as a vCard. Any phone camera will add the Philippine Embassy POLO 24h hotline to contacts.</p>
+      <img src="${dataUrl}" alt="QR code" class="qr-img" />
+      <a class="cta-ghost qr-download" download="panel-contact.png" href="${dataUrl}">
+        <span>↓ Save QR image</span>
+      </a>
+    </div>
+  `;
+  document.body.appendChild(div);
+  div.addEventListener("click", (e) => { if (e.target === div) div.remove(); });
+  div.querySelector(".qr-modal-close")!.addEventListener("click", () => div.remove());
 }
 
 // ---------------------------------------------------------------------------
@@ -309,60 +350,6 @@ function verdictLabel(before: number, after: number): string {
   if (drop >= 1) return "Modest improvement — most risks unaddressed.";
   if (drop === 0) return "No improvement — these amendments don't move the needle.";
   return "Counter-intuitive: amended contract scored worse.";
-}
-
-function downloadMarkdown(): void {
-  const md = toMarkdown(MOCK_RESULT);
-  const blob = new Blob([md], { type: "text/markdown" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "panel-review.md";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function toMarkdown(r: typeof MOCK_RESULT): string {
-  const intake = Store.get().intake;
-  const lang = LANGUAGES[intake.language] || intake.language;
-  return [
-    "# Panel — Your Contract Review",
-    "",
-    `**Urgency:** ${r.final_urgency_score}/10`,
-    `**Language:** ${lang}`,
-    "",
-    "## Summary",
-    "",
-    r.recommendation.tldr,
-    "",
-    "## What to do",
-    "",
-    ...r.recommendation.action_items.map((a) => `- ${a}`),
-    "",
-    "## Save these contacts",
-    "",
-    ...r.recommendation.contacts.map((c) =>
-      `- **${c.name}**${c.phone ? ` — ${c.phone}` : ""}${c.whatsapp ? ` — WhatsApp ${c.whatsapp}` : ""}`,
-    ),
-    "",
-    "## Do NOT agree to",
-    "",
-    ...r.refusals.map((x) => `- **${x.refusal}** — ${x.reason}`),
-    "",
-    "## Ask the recruiter to change",
-    "",
-    ...r.pushbacks.map((p) => `- Clause ${p.clause_number}: ${p.ask}\n  - Suggested: _${p.suggested}_`),
-    "",
-    "## Where the panel disagrees",
-    "",
-    ...r.disagreement_reel.flatMap((d) => [
-      `### #${d.rank} · ${d.topic}`,
-      ...d.tensions.map((t) => `- **${t.agent}:** ${t.verdict}`),
-      `_${d.why_it_matters}_`,
-      "",
-    ]),
-    "",
-    "_Panel provides information only — not legal advice._",
-  ].join("\n");
 }
 
 function escape(s: string): string {

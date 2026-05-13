@@ -1708,8 +1708,203 @@ main {
 }
 .export-row .cta-ghost {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
   justify-content: center;
+}
+.export-deeper {
+  margin-top: 14px;
+}
+.export-deeper .cta-ghost {
+  width: 100%;
+  justify-content: center;
+  padding: 14px 22px;
+  font-weight: 600;
+}
+
+/* ============================================================================
+   QR modal
+   ============================================================================ */
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: qrFadeIn 200ms ease-out;
+}
+@keyframes qrFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.qr-modal-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  animation: qrPop 280ms var(--easing-snap);
+}
+@keyframes qrPop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.qr-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--page);
+  border-radius: 999px;
+  font-size: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-modal-card h3 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+.qr-modal-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.qr-img {
+  width: 280px;
+  height: 280px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+.qr-download {
+  display: inline-flex;
+  text-decoration: none;
+  margin-top: 4px;
+}
+
+/* ============================================================================
+   NGO Dashboard
+   ============================================================================ */
+.dashboard {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.dash-head { text-align: left; }
+.dash-canvas-wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+#globe-canvas {
+  width: 100%;
+  height: 480px;
+  display: block;
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at center, #fefefe 0%, #fafaf9 100%);
+}
+.dash-legend {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.legend-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.legend-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.legend-row:last-child { border-bottom: none; }
+.legend-arc {
+  width: 32px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: var(--intensity);
+}
+.legend-label {
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.legend-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-xs);
+}
+.kpi-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.kpi-value {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+@media (max-width: 760px) {
+  .dash-canvas-wrap { grid-template-columns: 1fr; }
+  #globe-canvas { height: 340px; }
 }
 
 /* Mobile */
