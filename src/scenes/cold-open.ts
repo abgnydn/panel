@@ -2,11 +2,15 @@
  * Cold open — the landing experience.
  *
  * Sequence:
- *   0.0s  Brand mark fades up + slow float begins
- *   0.3s  "Panel" letters stagger-rise from below
- *   1.6s  Subtitle typewriter at ~33ms/char
- *   2.2s  Stat counters tween from 0 → target with custom formatter
- *   3.8s  CTA fades in with magnetic-hover wiring
+ *   0.00s  Brand mark + CTA visible from frame 1 (CSS, never strands)
+ *   0.05s  Hero block fades in (overall container)
+ *   0.30s  "Panel" letters stagger-rise from below
+ *   1.10s  Subtitle typewriter at 22ms/char
+ *   1.30s  Stat counters tween from 0 → target
+ *
+ * Total time-to-interactive: under 200ms (CTA + brand mark are static
+ * at first paint). Letter reveal + typewriter + counters keep playing,
+ * but the user never sees a "where's the button" gap.
  */
 import { gsap } from "gsap";
 
@@ -77,20 +81,20 @@ export function renderColdOpen(ctx: SceneCtx): void {
     </section>
   `;
 
-  // --- Brand mark ----------------------------------------------------------
-  gsap.from(".brand-mark", { opacity: 0, y: 20, duration: 1.2, ease: "power3.out" });
+  // --- Container + brand mark + CTA: visible from frame 1 -----------------
+  gsap.fromTo(".cold-open-inner",
+    { opacity: 0, y: 6 },
+    { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", clearProps: "transform" });
+  gsap.fromTo(".brand-mark",
+    { opacity: 0, y: 12 },
+    { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", clearProps: "transform" });
 
   // --- Letter reveal -------------------------------------------------------
-  gsap.from(".display-title .letter", {
-    y: 80,
-    opacity: 0,
-    duration: 1.1,
-    stagger: 0.08,
-    ease: "power4.out",
-    delay: 0.3,
-  });
+  gsap.fromTo(".display-title .letter",
+    { y: 60, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.9, stagger: 0.06, ease: "power4.out", delay: 0.3, clearProps: "transform" });
 
-  // --- Subtitle typewriter -------------------------------------------------
+  // --- Subtitle typewriter (faster, starts sooner) ------------------------
   const typed = root.querySelector<HTMLSpanElement>(".typed");
   const caret = root.querySelector<HTMLSpanElement>(".caret");
   if (typed && caret) {
@@ -102,12 +106,12 @@ export function renderColdOpen(ctx: SceneCtx): void {
         if (i >= SUBTITLE.length) {
           window.clearInterval(id);
         }
-      }, 32);
+      }, 22);
     };
-    window.setTimeout(begin, 1600);
+    window.setTimeout(begin, 1100);
   }
 
-  // --- Stat counters -------------------------------------------------------
+  // --- Stat counters (start at 1.3s, finish by ~2.5s) ---------------------
   root.querySelectorAll<HTMLElement>(".stat").forEach((statEl, idx) => {
     const cfg = STATS[idx];
     if (!cfg) return;
@@ -115,21 +119,14 @@ export function renderColdOpen(ctx: SceneCtx): void {
     if (!counter) return;
 
     if (cfg.target === 0) {
-      gsap.to(counter, {
-        opacity: 1,
-        delay: 2.2 + idx * 0.12,
-        duration: 0.5,
-        onStart: () => {
-          counter.textContent = cfg.format ? cfg.format(0) : "0";
-        },
-      });
+      counter.textContent = cfg.format ? cfg.format(0) : "0";
       return;
     }
     const obj = { v: 0 };
     gsap.to(obj, {
       v: cfg.target,
-      duration: 1.8,
-      delay: 2.2 + idx * 0.12,
+      duration: 1.2,
+      delay: 1.3 + idx * 0.1,
       ease: "power3.out",
       onUpdate() {
         counter.textContent = cfg.format ? cfg.format(obj.v) : Math.round(obj.v).toString();
@@ -137,10 +134,9 @@ export function renderColdOpen(ctx: SceneCtx): void {
     });
   });
 
-  // --- CTA fade + magnetic hover ------------------------------------------
+  // --- CTA: visible immediately, with a gentle settle (no entrance fade) --
   const cta = root.querySelector<HTMLButtonElement>(".cta");
   if (cta) {
-    gsap.from(cta, { opacity: 0, y: 16, duration: 0.9, delay: 3.8, ease: "power3.out" });
 
     let raf = 0;
     let tx = 0, ty = 0;
