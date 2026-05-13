@@ -10,8 +10,10 @@ import { gsap } from "gsap";
 import { renderColdOpen } from "./cold-open";
 import { renderIntake } from "./intake";
 import { renderDeliberation } from "./deliberation";
+import { renderReel } from "./reel";
+import { renderRecommendation } from "./recommendation";
 
-export type SceneId = "cold-open" | "intake" | "deliberation";
+export type SceneId = "cold-open" | "intake" | "deliberation" | "reel" | "recommendation";
 
 export type SceneCtx = {
   root: HTMLElement;
@@ -35,6 +37,8 @@ export function mountRouter(root: HTMLElement): void {
         if (next === "cold-open") renderColdOpen(ctx);
         else if (next === "intake") renderIntake(ctx);
         else if (next === "deliberation") renderDeliberation(ctx);
+        else if (next === "reel") renderReel(ctx);
+        else if (next === "recommendation") renderRecommendation(ctx);
         gsap.fromTo(
           root,
           { opacity: 0, y: 8 },

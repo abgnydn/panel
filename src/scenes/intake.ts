@@ -143,14 +143,8 @@ export function renderIntake(ctx: SceneCtx): void {
     goto("deliberation");
   });
 
-  // ---- Entrance animations ------------------------------------------------
-  gsap.from(".intake-head", { opacity: 0, y: 20, duration: 0.7, ease: "power3.out" });
-  gsap.from(".tabs",        { opacity: 0, y: 16, duration: 0.6, delay: 0.15, ease: "power3.out" });
-  gsap.from(".sample-card", {
-    opacity: 0, y: 24,
-    duration: 0.6, stagger: 0.04, delay: 0.25, ease: "power3.out",
-  });
-  gsap.from(".intake-foot", { opacity: 0, y: 10, duration: 0.5, delay: 0.5, ease: "power3.out" });
+  // Entrance animations are handled by CSS keyframes — GSAP `.from` was racing
+  // with the router's scene-fade and leaving cards at opacity:0.
 }
 
 function sampleCardHtml(s: Sample): string {
