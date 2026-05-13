@@ -47,16 +47,18 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  height: 100%;
-  background: var(--page);
+html {
+  min-height: 100%;
+}
+body {
+  min-height: 100vh;
+  background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
 }
-
-body { overflow-x: hidden; }
 
 #bg {
   position: fixed;
@@ -75,6 +77,12 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Default page background — covers the fluid canvas behind. Scenes that
+     want the canvas visible (cold-open) override below. */
+  background: var(--page);
+}
+main:has(.cold-open) {
+  background: transparent;
 }
 main:has(.recommendation),
 main:has(.deliberation),
@@ -85,6 +93,7 @@ main:has(.intake),
 main:has(.dashboard) {
   align-items: flex-start;
   padding-top: 2rem;
+  padding-bottom: 4rem;
 }
 
 /* Universal focus state for interactive elements */
