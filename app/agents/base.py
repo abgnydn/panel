@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..llm import complete_json
+try:
+    from ..llm import complete_json
+except ImportError:
+    from llm import complete_json  # deployed Databricks App context
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 

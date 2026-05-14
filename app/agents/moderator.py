@@ -4,7 +4,10 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable
 
-from .. import cache, store
+try:
+    from .. import cache, store
+except ImportError:
+    import cache, store  # deployed Databricks App context (sys.path includes app/)
 from . import (checklist, disagreement, lawyer, negotiator, peer_advocate,
                rebuttal, regulator, translator, triage)
 from .base import AgentResult, run_with_timing

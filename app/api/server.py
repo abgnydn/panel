@@ -1,38 +1,35 @@
-"""FastAPI wrapper for the Panel agents.
+"""Panel FastAPI server.
 
-Mounts the existing app.agents.run_panel under /api/panel/run and serves the
-panel-v2 static bundle (when built) from /. This is the path Databricks Apps
-would deploy — one server, one URL, FastAPI inside.
+Mounted under a Databricks App. Same source code runs locally when launched
+as `uvicorn app.api.server:app` from the panel/ repo root, OR inside a
+Databricks App where the bundled app/ directory is itself the working dir.
 
-Run:
-    cd ~/panel
-    .venv/bin/uvicorn api.server:app --reload --port 8000
-
-CORS is permissive in dev so the panel-v2 Vite server (port 5173) can call it.
+The sys.path shim below makes sibling-package imports
+(`from agents import ...`) work in both contexts.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# Allow `from app...` imports from anywhere inside the panel/ repo.
-_ROOT = Path(__file__).resolve().parents[1]
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
+# Make `from agents import ...` work in both deployment contexts.
+_HERE = Path(__file__).resolve().parent    # .../app/api/
+_APP_ROOT = _HERE.parent                    # .../app/
+if str(_APP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_APP_ROOT))
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app.agents import run_panel
+from agents import run_panel
 try:
-    from app.samples import SAMPLES, load_sample
+    from samples import SAMPLES, load_sample
 except ImportError:
-    # Streamlit-side samples.py was named differently; provide a stub.
-    SAMPLES: dict = {}
-    def load_sample(_id: str) -> str:  # type: ignore[misc]
+    SAMPLES = {}
+    def load_sample(_id: str) -> str:
         return ""
 
 app = FastAPI(
@@ -43,7 +40,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173",
+                   "https://panel-v2-nvg.pages.dev",
+                   "https://panel-v2.pages.dev"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,7 +75,7 @@ def list_samples() -> dict:
                 "description": s["description"],
                 "tier": s["tier"],
             }
-            for sid, s in SAMPLES.items()
+            for sid, s in (SAMPLES or {}).items()
         ],
     }
 
@@ -110,8 +109,11 @@ def run(req: PanelRunRequest) -> JSONResponse:
     return JSONResponse(result)
 
 
-# Serve the panel-v2 static bundle when it exists (after `npm run build`).
-_BUNDLE = _ROOT.parent / "panel-v2" / "dist"
+# Serve the bundled panel-v2 static site from /
+_STATIC = _APP_ROOT / "static"
+_DEV_STATIC = _APP_ROOT.parent.parent / "panel-v2" / "dist"
+_BUNDLE = _STATIC if _STATIC.exists() else _DEV_STATIC
+
 if _BUNDLE.exists():
     app.mount("/", StaticFiles(directory=str(_BUNDLE), html=True), name="static")
 else:
@@ -119,6 +121,6 @@ else:
     def root_placeholder() -> dict:
         return {
             "message": "Panel API running.",
-            "frontend": "Build panel-v2 with `npm run build` to serve it from / .",
+            "frontend": "Run scripts/build_and_deploy.sh to bundle panel-v2 into app/static/",
             "endpoints": ["/api/health", "/api/samples", "POST /api/panel/run"],
         }

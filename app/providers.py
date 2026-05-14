@@ -229,7 +229,34 @@ def _mock_complete(system: str, user: str, *, model: str, max_tokens: int,
 # ----------------------------------------------------------------------------
 # Registry
 # ----------------------------------------------------------------------------
+def _mosaic_complete_lazy(*args, **kwargs):
+    from .providers_mosaic import mosaic_complete
+    return mosaic_complete(*args, **kwargs)
+
+
+def _mosaic_test_lazy(**kwargs):
+    from .providers_mosaic import mosaic_test
+    return mosaic_test(**kwargs)
+
+
 PROVIDERS: dict[str, dict[str, Any]] = {
+    "mosaic": {
+        "label": "Databricks Mosaic AI",
+        "description": "Foundation Model serving endpoints inside the workspace. "
+                       "No external key — uses workspace identity.",
+        "needs_key": False,
+        "needs_url": False,
+        "supports_vision": False,
+        "default_model": "haiku",
+        "models": ["haiku", "sonnet", "opus",
+                   "databricks-qwen3-next-80b-a3b-instruct",
+                   "databricks-llama-3-3-70b-instruct",
+                   "databricks-gpt-oss-20b",
+                   "databricks-gemma-3-12b"],
+        "env_key": None,
+        "complete": _mosaic_complete_lazy,
+        "test": _mosaic_test_lazy,
+    },
     "claude_cli": {
         "label": "Claude CLI (local auth)",
         "description": "Uses your installed `claude` CLI — no API key needed.",
@@ -313,10 +340,24 @@ def list_providers() -> list[tuple[str, dict[str, Any]]]:
 
 
 def default_provider() -> str:
-    """Pick a sensible default at boot."""
+    """Pick a sensible default at boot.
+
+    Priority:
+      1. PANEL_LLM_PROVIDER env override
+      2. Databricks runtime → mosaic (no key needed, native)
+      3. `claude` CLI installed → claude_cli
+      4. Any env-key provider available
+      5. Mock
+    """
     forced = os.environ.get("PANEL_LLM_PROVIDER", "").lower().strip()
     if forced and forced in PROVIDERS:
         return forced
+    try:
+        from .providers_mosaic import is_databricks_runtime
+        if is_databricks_runtime():
+            return "mosaic"
+    except Exception:
+        pass
     if shutil.which("claude"):
         return "claude_cli"
     if os.environ.get("ANTHROPIC_API_KEY"):

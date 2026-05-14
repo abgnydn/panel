@@ -1,0 +1,20 @@
+# Databricks Apps runtime config — defines how the App is launched.
+# Reference: https://docs.databricks.com/aws/en/dev-tools/databricks-apps/
+
+command:
+  - "uvicorn"
+  - "api.server:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+env:
+  - name: PANEL_LLM_PROVIDER
+    value: mosaic
+  - name: PANEL_LAKEBASE
+    value: panel-db
+  - name: PANEL_LAKEBASE_DB
+    value: databricks_postgres
+  - name: PANEL_USE_LAKEBASE
+    value: "1"
