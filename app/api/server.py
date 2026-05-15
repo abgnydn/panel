@@ -32,6 +32,13 @@ except ImportError:
     def load_sample(_id: str) -> str:
         return ""
 
+try:
+    import genie_client
+    _GENIE_OK = True
+except Exception as _e:  # pragma: no cover
+    genie_client = None  # type: ignore
+    _GENIE_OK = False
+
 app = FastAPI(
     title="Panel API",
     description="Six-agent migrant-worker rights advisor.",
@@ -78,6 +85,24 @@ def list_samples() -> dict:
             for sid, s in (SAMPLES or {}).items()
         ],
     }
+
+
+class GenieQuery(BaseModel):
+    question: str
+
+
+@app.post("/api/genie/query")
+def genie_query(req: GenieQuery) -> JSONResponse:
+    """Forward a question to the Genie Space and return its NL answer + the
+    SQL it ran + the result rows. The Lawyer + Regulator agents will use this
+    in future iterations; for now it's exposed for direct interactive use
+    from the v2 frontend."""
+    if not _GENIE_OK or not genie_client:
+        raise HTTPException(503, "Genie client not available.")
+    try:
+        return JSONResponse(genie_client.ask(req.question))
+    except Exception as exc:
+        raise HTTPException(500, f"genie query failed: {exc}") from exc
 
 
 @app.post("/api/panel/run")

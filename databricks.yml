@@ -24,6 +24,9 @@ variables:
   warehouse_id:
     description: Serverless SQL warehouse for Genie / SQL workloads
     default: 3bb8d46fd7cb0b0a
+  genie_space_id:
+    description: Genie Space — NL → SQL over labor codes / ILO standards
+    default: 01f15002d16915548191d84deb5267ed
 
 resources:
   apps:
@@ -53,6 +56,12 @@ resources:
           serving_endpoint:
             name: databricks-meta-llama-3-3-70b-instruct
             permission: CAN_QUERY
+        - name: genie
+          description: "Genie Space for NL → SQL over reference tables"
+          genie_space:
+            name: Panel · Labor Law Q&A
+            space_id: ${var.genie_space_id}
+            permission: CAN_RUN
 
 targets:
   dev:

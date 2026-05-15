@@ -18,3 +18,5 @@ env:
     value: databricks_postgres
   - name: PANEL_USE_LAKEBASE
     value: "1"
+  - name: GENIE_SPACE_ID
+    value: "01f15002d16915548191d84deb5267ed"
