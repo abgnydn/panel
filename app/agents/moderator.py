@@ -158,6 +158,38 @@ def run_panel(
         except Exception:
             pass
 
+    # Surface the Negotiator agent's structured output at the top level so the
+    # v2 frontend's Negotiation scene reads it without re-mapping. The same
+    # data lives in outputs["negotiator"] under .agents already.
+    negotiator_out = outputs.get("negotiator") or {}
+    negotiation_block = {
+        "strategy":         negotiator_out.get("negotiation_strategy", "") or "",
+        "priority_pushback": negotiator_out.get("priority_pushback", {}) or {},
+        "questions":        negotiator_out.get("questions_to_ask", []) or [],
+        "red_flags":        negotiator_out.get("red_flag_responses", []) or [],
+    }
+
+    # Same idea for refusals + pushbacks: pull off the checklist output if
+    # one exists, otherwise derive from the negotiator's priority pushback.
+    if isinstance(checklist_out, dict) and not checklist_out.get("_error"):
+        refusals  = checklist_out.get("things_to_refuse", []) or []
+        pushbacks = checklist_out.get("recruiter_pushback", []) or []
+        checklist_phases = {
+            "before_departure":   checklist_out.get("phases", {}).get("before_departure", []),
+            "on_arrival":         checklist_out.get("phases", {}).get("on_arrival", []),
+            "during_employment":  checklist_out.get("phases", {}).get("during_employment", []),
+            "exit_emergency":     checklist_out.get("phases", {}).get("exit_emergency", []),
+        }
+    else:
+        refusals = []
+        pushbacks = []
+        checklist_phases = {
+            "before_departure":  [],
+            "on_arrival":        [],
+            "during_employment": [],
+            "exit_emergency":    [],
+        }
+
     final = {
         "session_id": session_id,
         "worker_l1": worker_l1,
@@ -169,7 +201,10 @@ def run_panel(
         "final_urgency_score": urgency,
         "disagreement_reel": reel,
         "rebuttals": rebuttals,
-        "checklist": checklist_out,
+        "negotiation": negotiation_block,
+        "checklist": checklist_phases,
+        "refusals": refusals,
+        "pushbacks": pushbacks,
         "recommendation": synth,
         "_cache_hit": False,
     }
