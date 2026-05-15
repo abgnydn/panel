@@ -220,7 +220,10 @@ def _claude_cli_test(*, key: str | None = None, model: str = "haiku") -> tuple[b
 def _mock_complete(system: str, user: str, *, model: str, max_tokens: int,
                    image_bytes: bytes | None = None, image_mime: str = "image/jpeg",
                    key: str | None = None) -> CompletionResult:
-    from .llm import _mock as _llm_mock
+    try:
+        from .llm import _mock as _llm_mock
+    except ImportError:
+        from llm import _mock as _llm_mock
     return CompletionResult(text=_llm_mock(system, user, image_bytes).text,
                             usage={"input_tokens": 0, "output_tokens": 0},
                             provider="mock")
@@ -230,12 +233,18 @@ def _mock_complete(system: str, user: str, *, model: str, max_tokens: int,
 # Registry
 # ----------------------------------------------------------------------------
 def _mosaic_complete_lazy(*args, **kwargs):
-    from .providers_mosaic import mosaic_complete
+    try:
+        from .providers_mosaic import mosaic_complete
+    except ImportError:
+        from providers_mosaic import mosaic_complete
     return mosaic_complete(*args, **kwargs)
 
 
 def _mosaic_test_lazy(**kwargs):
-    from .providers_mosaic import mosaic_test
+    try:
+        from .providers_mosaic import mosaic_test
+    except ImportError:
+        from providers_mosaic import mosaic_test
     return mosaic_test(**kwargs)
 
 
@@ -353,7 +362,10 @@ def default_provider() -> str:
     if forced and forced in PROVIDERS:
         return forced
     try:
-        from .providers_mosaic import is_databricks_runtime
+        try:
+            from .providers_mosaic import is_databricks_runtime
+        except ImportError:
+            from providers_mosaic import is_databricks_runtime
         if is_databricks_runtime():
             return "mosaic"
     except Exception:

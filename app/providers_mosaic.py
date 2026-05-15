@@ -17,7 +17,10 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from .providers import CompletionResult
+try:
+    from .providers import CompletionResult
+except ImportError:
+    from providers import CompletionResult  # deployed Databricks App context
 
 # Model aliases — same shape as the rest of the provider registry uses
 MODEL_ALIASES = {

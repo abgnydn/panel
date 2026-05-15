@@ -46,12 +46,18 @@ PROVIDER = _provider()
 
 def is_live() -> bool:
     """True when the active backend is not the mock."""
-    from . import providers
+    try:
+        from . import providers
+    except ImportError:
+        import providers
     return providers.get_config()["provider"] != "mock"
 
 
 def provider_label() -> str:
-    from . import providers
+    try:
+        from . import providers
+    except ImportError:
+        import providers
     cfg = providers.get_config()
     spec = providers.PROVIDERS.get(cfg["provider"], {})
     return f"{spec.get('label', cfg['provider'])} / {cfg.get('model') or '?'}"
@@ -76,7 +82,10 @@ def complete(
     supports_vision=True. If the active provider doesn't, the call is
     routed to Anthropic when a key is available, else mock.
     """
-    from . import providers
+    try:
+        from . import providers
+    except ImportError:
+        import providers
     try:
         r = providers.complete(
             system, user,

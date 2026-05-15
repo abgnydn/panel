@@ -11,7 +11,10 @@ from __future__ import annotations
 import io
 from typing import Literal
 
-from .llm import PROVIDER, complete
+try:
+    from .llm import PROVIDER, complete
+except ImportError:
+    from llm import PROVIDER, complete  # deployed Databricks App context
 
 
 SYSTEM_OCR = """You are an OCR transcriber for migrant worker employment contracts.
