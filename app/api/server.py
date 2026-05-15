@@ -26,8 +26,9 @@ from pydantic import BaseModel
 
 from agents import run_panel
 try:
-    from samples import SAMPLES, load_sample
-except ImportError:
+    from samples import SAMPLES, load as load_sample
+except ImportError as _samples_err:
+    print(f"[panel] samples import failed: {_samples_err}")
     SAMPLES = {}
     def load_sample(_id: str) -> str:
         return ""
