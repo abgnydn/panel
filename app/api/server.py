@@ -89,20 +89,39 @@ def list_samples() -> dict:
 
 class GenieQuery(BaseModel):
     question: str
+    conversation_id: str | None = None
 
 
 @app.post("/api/genie/query")
 def genie_query(req: GenieQuery) -> JSONResponse:
-    """Forward a question to the Genie Space and return its NL answer + the
-    SQL it ran + the result rows. The Lawyer + Regulator agents will use this
-    in future iterations; for now it's exposed for direct interactive use
-    from the v2 frontend."""
+    """Multi-turn Genie chat.
+
+    If `conversation_id` is provided, continues that conversation (Genie keeps
+    earlier turns as context). Otherwise starts a fresh one.
+
+    Returns the NL answer + the SQL Genie generated + result rows +
+    3 AI-suggested follow-up questions.
+    """
     if not _GENIE_OK or not genie_client:
         raise HTTPException(503, "Genie client not available.")
     try:
-        return JSONResponse(genie_client.ask(req.question))
+        return JSONResponse(genie_client.ask(req.question, req.conversation_id))
     except Exception as exc:
         raise HTTPException(500, f"genie query failed: {exc}") from exc
+
+
+@app.get("/api/genie/seed-questions")
+def genie_seed() -> dict[str, list[str]]:
+    """The starter questions that appear before any conversation has begun."""
+    return {
+        "questions": [
+            "What are the recruitment fee rules for Saudi Arabia under KSA labor law?",
+            "Compare passport retention statutes across SA, MY, SG, HK, and AE.",
+            "Which destination countries have ratified ILO C181 and C189?",
+            "Show abuse-pattern outcome counts grouped by clause and destination.",
+            "Which embassies in the destination corridors run 24-hour hotlines?",
+        ],
+    }
 
 
 @app.post("/api/panel/run")
