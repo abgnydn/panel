@@ -223,7 +223,7 @@ Same agent code runs against any of them. Swap by changing one env var.
 
 **Marketing Delphi (Singapore)**
 
-- **Baris Günaydin** — owner. Architecture, agents, backend, deploy.
+- **Ahmet Baris Gunaydin** — owner. Architecture, agents, backend, deploy.
 - **Anne Lazarakis** — co-founder. Originated the Negotiator agent — *"telling someone their contract is bad is useless unless you also tell them what to say."* The single most differentiating piece of the panel.
 
 ---

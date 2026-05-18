@@ -11,7 +11,7 @@
 | **Name** | Panel |
 | **Tagline** | A panel of AI specialists that reads your contract, in your language, and tells you what's wrong with it. |
 | **Team** | Marketing Delphi (Singapore) |
-| **Members** | Baris Günaydin (owner), Anne Lazarakis (co-founder) |
+| **Members** | Ahmet Baris Gunaydin (owner), Anne Lazarakis (co-founder) |
 | **Country of submission** | Singapore |
 | **Track** | Track 1 — Social Impact, open data |
 | **Live URL** | https://panel-7474659131504222.aws.databricksapps.com |
