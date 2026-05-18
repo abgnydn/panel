@@ -11,7 +11,7 @@
 | **Name** | Panel |
 | **Tagline** | A panel of AI specialists that reads your contract, in your language, and tells you what's wrong with it. |
 | **Team** | Marketing Delphi (Singapore) |
-| **Members** | Baris Günaydin (owner), Anne Günaydin (co-founder) |
+| **Members** | Baris Günaydin (owner), Anne Lazarakis (co-founder) |
 | **Country of submission** | Singapore |
 | **Track** | Track 1 — Social Impact, open data |
 | **Live URL** | https://panel-7474659131504222.aws.databricksapps.com |
@@ -64,41 +64,54 @@ The output isn't a single verdict. It's a structured debate. Workers see the *La
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    Worker[/"Migrant worker<br/>mobile, any APJ language"/]:::worker
+
+    Worker -->|"HTTPS"| Apps
+
+    subgraph Apps["<b>Databricks Apps</b>"]
+        direction TB
+        FE["<b>Frontend</b><br/>vanilla TS · Vite 8 · Three.js · GSAP<br/>8 cinematic scenes"]:::front
+        BE["<b>FastAPI backend</b><br/>uvicorn · provider abstraction<br/>/api/panel/run · /api/genie/query"]:::back
+        FE <-->|"same origin"| BE
+    end
+
+    BE --> Moderator{{"<b>Moderator</b><br/>ThreadPoolExecutor · 6-way parallel<br/>Round 2 rebuttal · disagreement detection"}}:::mod
+
+    Moderator --> Lawyer["Lawyer"]:::agent
+    Moderator --> Translator["Translator"]:::agent
+    Moderator --> Regulator["Regulator"]:::agent
+    Moderator --> PeerAdvocate["Peer Advocate"]:::agent
+    Moderator --> Triage["Triage"]:::agent
+    Moderator --> Negotiator["Negotiator"]:::agent
+
+    Lawyer & Translator & Regulator & PeerAdvocate & Triage & Negotiator --> Mosaic["<b>Mosaic AI Model Serving</b><br/>qwen3-next-80b · llama-3-3-70b"]:::mosaic
+
+    BE -.->|"sessions · recommendations · audit"| Lakebase[("<b>Lakebase</b><br/>Postgres 16 OLTP")]:::lake
+    BE -.->|"NL question · multi-turn"| Genie["<b>Genie Space</b><br/>NL → SQL · AI follow-ups"]:::genie
+    Genie --> UC[("<b>Unity Catalog</b><br/>panel.main<br/>labor_codes · ilo_standards<br/>case_archive · embassy_directory")]:::uc
+
+    classDef worker fill:#fef3c7,stroke:#92400e,stroke-width:2px,color:#451a03
+    classDef front fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
+    classDef back fill:#ede9fe,stroke:#5b21b6,color:#3730a3
+    classDef mod fill:#fce7f3,stroke:#9d174d,stroke-width:2px,color:#831843
+    classDef agent fill:#f0fdf4,stroke:#166534,color:#14532d
+    classDef mosaic fill:#fef2f2,stroke:#991b1b,color:#7f1d1d
+    classDef lake fill:#eff6ff,stroke:#1e3a8a,color:#1e3a8a
+    classDef genie fill:#f5f3ff,stroke:#5b21b6,color:#4c1d95
+    classDef uc fill:#f1f5f9,stroke:#334155,color:#0f172a
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│              Worker (mobile-first, any APJ language)                 │
-└──────────────────────────────────────────────────────────────────────┘
-                                    │
-                  ▼ HTTPS, same-origin (Databricks Apps)
-┌──────────────────────────────────────────────────────────────────────┐
-│   Frontend  ·  Vanilla TypeScript + Vite + Three.js + GSAP           │
-│   8 cinematic scenes — intake, deliberation, reel, rebuttals,        │
-│   negotiation, recommendation, dashboard, genie-chat                 │
-└──────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌──────────────────────────────────────────────────────────────────────┐
-│   Backend  ·  FastAPI on Databricks Apps (uvicorn)                   │
-│                                                                       │
-│   POST /api/panel/run     → moderator orchestrator (6 agents //)     │
-│   POST /api/genie/query   → multi-turn Genie chat + AI follow-ups    │
-│   GET  /api/genie/seed-questions                                     │
-│   GET  /api/samples                                                  │
-│   GET  /api/health                                                   │
-└──────────────────────────────────────────────────────────────────────┘
-        │                  │                    │                │
-        ▼                  ▼                    ▼                ▼
-┌───────────────┐  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐
-│  Mosaic AI    │  │   Lakebase     │  │     Genie      │  │ Unity Catalog│
-│  Foundation   │  │  Postgres 16   │  │  Space (NL→SQL)│  │  panel.main  │
-│   Models      │  │     OLTP       │  │                │  │              │
-│               │  │                │  │  labor_codes   │  │  Delta tables│
-│ qwen3-next-80b│  │  workers       │  │  ilo_standards │  │  governed    │
-│ llama-3-3-70b │  │  sessions      │  │  case_archive  │  │  under one   │
-│               │  │  agent_msgs    │  │  embassy_dir   │  │  ACL         │
-│               │  │  recommends    │  │                │  │              │
-└───────────────┘  └────────────────┘  └────────────────┘  └──────────────┘
-```
+
+API surface:
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/panel/run` | Run the six-agent panel against a contract + situation. Returns the full result envelope: per-agent outputs, the disagreement reel, Round 2 rebuttals, recommendation, checklist, negotiation, refusals, pushbacks. |
+| `POST /api/genie/query` | Multi-turn Genie chat — pass `conversation_id` to continue. Returns NL answer + the SQL Genie ran + result rows + three AI-generated follow-up suggestions. |
+| `GET /api/genie/seed-questions` | The three starter chips shown before any conversation has begun. |
+| `GET /api/samples` | Demo contract registry. |
+| `GET /api/health` | Liveness + provider availability. |
 
 ### Single-deploy on Databricks Apps
 
@@ -158,7 +171,7 @@ Two corridors only for the live judge demo. We don't overpromise broad language 
 
 | Time | Scene | What the judge sees |
 |---|---|---|
-| 0:00 | **Cold-open** | Three.js fluid simulation + the tagline. Sets the tone — this is a cinematic product, not a Streamlit dashboard. |
+| 0:00 | **Cold-open** | Three.js fluid simulation + the tagline. Sets the tone — this is a product, not a dashboard. |
 | 0:20 | **Intake** | Worker selects sample contract (hero case: PH→SA, Tagalog), language picker, situation sentence. |
 | 0:50 | **Deliberation** | Six agent panes light up in parallel, latency-stamped, verdicts arriving as they complete. ~12 s end-to-end. |
 | 1:50 | **The reel** | The three biggest disagreements, ranked, with severity tints and per-agent tension rows. The moat. |
@@ -212,7 +225,7 @@ Panel provides **informational guidance only.** It is not legal advice.
 - **databricks-sdk** ≥ 0.108 — Genie + Lakebase + Mosaic AI clients
 - **psycopg** 3 — Lakebase Postgres driver
 - Six agent modules + moderator + checklist + rebuttal orchestrator
-- Provider abstraction: Mosaic / Anthropic / OpenAI / Gemini / LM Studio / Claude CLI / mock
+- Provider abstraction: Mosaic (production default) / Anthropic / OpenAI / Gemini / LM Studio / Claude CLI / mock
 
 ### Frontend
 
@@ -244,5 +257,4 @@ Panel provides **informational guidance only.** It is not legal advice.
 ## Conversations to preserve
 
 - The Negotiator was added late, on Anne's observation that "telling someone their contract is bad is useless unless you also tell them what to say." It's the single most differentiating piece of the panel — every other agent produces a verdict; the Negotiator produces a script.
-- The product was originally a Streamlit dashboard. The current vanilla-TS / Three.js / GSAP cinematic frontend is a complete rewrite — the Streamlit version remains in the repo as the local-dev fallback at `app/streamlit_app.py`, but the deployed surface is the cinematic v2.
 - All six agents producing in parallel through a `ThreadPoolExecutor` (latency ~12 s end-to-end) is a deliberate UX choice — judges and workers should see the panel composing itself, not stare at a single loading spinner.
