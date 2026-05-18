@@ -116,11 +116,11 @@ def genie_seed() -> dict[str, list[str]]:
     """The starter questions that appear before any conversation has begun."""
     return {
         "questions": [
-            "What are the recruitment fee rules for Saudi Arabia under KSA labor law?",
-            "Compare passport retention statutes across SA, MY, SG, HK, and AE.",
-            "Which destination countries have ratified ILO C181 and C189?",
-            "Show abuse-pattern outcome counts grouped by clause and destination.",
-            "Which embassies in the destination corridors run 24-hour hotlines?",
+            "How many cases in the archive ended with the worker returning early?",
+            "List the labor-code rules for passport retention across SA, MY, SG, HK, AE.",
+            "Which ILO conventions has Saudi Arabia ratified?",
+            "Count abuse-pattern outcomes grouped by clause topic and destination.",
+            "Show 24-hour embassy hotlines for the Philippines and Indonesia corridors.",
         ],
     }
 

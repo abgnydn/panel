@@ -62,22 +62,68 @@ def ask(question: str, conversation_id: str | None = None) -> dict[str, Any]:
     """
     from databricks.sdk import WorkspaceClient
 
+    from databricks.sdk.service.dashboards import MessageStatus
+
     t0 = time.time()
     w = WorkspaceClient()
 
+    def _id_of(obj) -> str:
+        # Older SDK exposes only `.id`; newer also has `.message_id`. Use either.
+        return getattr(obj, "message_id", None) or getattr(obj, "id", None) or ""
+
+    # Start the request without using *_and_wait — the wait helpers raise an
+    # OperationFailed on MessageStatus.FAILED, which discards the real
+    # error.error / error.type fields we need to show the user.
     if conversation_id:
-        msg = w.genie.create_message_and_wait(
+        waiter = w.genie.create_message(
             space_id=GENIE_SPACE_ID,
             conversation_id=conversation_id,
             content=question,
-            timeout=MAX_POLL,
         )
+        conv_id = conversation_id
+        resp = getattr(waiter, "response", waiter)
+        message_id = _id_of(resp) or _id_of(waiter)
     else:
-        msg = w.genie.start_conversation_and_wait(
+        waiter = w.genie.start_conversation(space_id=GENIE_SPACE_ID, content=question)
+        resp = getattr(waiter, "response", waiter)
+        conv_id = (getattr(resp, "conversation_id", None)
+                   or getattr(waiter, "conversation_id", None) or "")
+        message_id = _id_of(resp) or _id_of(waiter)
+
+    # Poll manually until we hit a terminal state.
+    TERMINAL = {MessageStatus.COMPLETED, MessageStatus.FAILED,
+                MessageStatus.CANCELLED, MessageStatus.QUERY_RESULT_EXPIRED}
+    deadline = time.time() + MAX_POLL.total_seconds()
+    msg = None
+    while time.time() < deadline:
+        msg = w.genie.get_message(
             space_id=GENIE_SPACE_ID,
-            content=question,
-            timeout=MAX_POLL,
+            conversation_id=conv_id,
+            message_id=message_id,
         )
+        if msg.status in TERMINAL:
+            break
+        time.sleep(0.8)
+
+    if msg is None or msg.status != MessageStatus.COMPLETED:
+        # Surface the real error so the user (and future-us) knows what to fix.
+        err_type = getattr(msg.error, "type", None) if msg and msg.error else None
+        err_text = getattr(msg.error, "error", None) if msg and msg.error else None
+        friendly = _friendly_error(msg.status if msg else None, err_type, err_text)
+        return {
+            "question": question,
+            "text": friendly,
+            "sql": "",
+            "columns": [],
+            "rows": [],
+            "conversation_id": conv_id,
+            "message_id": message_id,
+            "suggested_questions": _default_suggestions(),
+            "latency_ms": int((time.time() - t0) * 1000),
+            "error": True,
+            "error_type": str(err_type) if err_type else None,
+            "status": str(msg.status) if msg else "timeout",
+        }
 
     text_parts: list[str] = []
     sql = ""
@@ -92,9 +138,9 @@ def ask(question: str, conversation_id: str | None = None) -> dict[str, Any]:
             try:
                 qr = w.genie.get_message_attachment_query_result(
                     space_id=GENIE_SPACE_ID,
-                    conversation_id=msg.conversation_id,
-                    message_id=msg.message_id,
-                    attachment_id=att.attachment_id,
+                    conversation_id=getattr(msg, "conversation_id", conv_id),
+                    message_id=_id_of(msg) or message_id,
+                    attachment_id=getattr(att, "attachment_id", None) or getattr(att, "id", None),
                 )
                 if qr.statement_response:
                     sr = qr.statement_response
@@ -160,7 +206,40 @@ def _suggest_follow_ups(question: str, answer_text: str, w) -> list[str]:
 
 def _default_suggestions() -> list[str]:
     return [
-        "Compare this with another destination country.",
-        "Which clauses cluster with bad outcomes here?",
-        "List 24-hour hotlines for this corridor.",
+        "How many cases in the archive ended with the worker returning early?",
+        "Show all 24-hour embassy hotlines for Philippine workers.",
+        "Which destination countries have the highest abuse-report rate?",
     ]
+
+
+def _friendly_error(status, err_type, err_text: str | None) -> str:
+    """Translate Genie's error envelope into something useful in the chat."""
+    type_str = str(err_type) if err_type else ""
+    detail = f"\n\nDetails: {err_text}" if err_text else ""
+
+    if "NO_TABLES_TO_QUERY" in type_str:
+        return ("Genie says it has no tables to query in this Space. "
+                "Open the Genie Space settings and add the panel tables "
+                "(labor_codes, ilo_standards, case_archive, embassy_directory)." + detail)
+    if "INVALID_SQL_UNKNOWN_TABLE" in type_str or "INVALID_TABLE_IDENTIFIER" in type_str:
+        return ("Genie tried to query a table that doesn't exist in this Space's catalog/schema. "
+                "Check the Space's data sources." + detail)
+    if "UC_SCHEMA" in type_str:
+        return ("Genie couldn't read the Unity Catalog schema. "
+                "Verify the Space has read permission on the panel schema." + detail)
+    if "CONTEXT_EXCEEDED" in type_str or "EXCEEDED_MAX_TOKEN" in type_str:
+        return ("That question is too long for Genie's context window. "
+                "Try a shorter, more focused question." + detail)
+    if "RATE_LIMIT" in type_str:
+        return ("Genie is rate-limited right now — wait 30 seconds and try again." + detail)
+    if "GENERATED_SQL_QUERY_TOO_LONG" in type_str or "DESCRIBE_QUERY" in type_str:
+        return ("Genie generated SQL but couldn't validate it against the schema. "
+                "Try rephrasing — fewer joins or aggregations." + detail)
+    if str(status).endswith("CANCELLED"):
+        return ("Genie cancelled the request." + detail)
+    if str(status) == "timeout":
+        return ("Genie didn't respond within 60 seconds. Try again or rephrase." + detail)
+
+    return (f"Genie couldn't complete this question (status: {status}, error: {type_str}). "
+            "Try a simpler, more data-shaped question — counts, lists, or comparisons "
+            "across rows in labor_codes / ilo_standards / case_archive / embassy_directory." + detail)

@@ -25,13 +25,26 @@ class Sample(TypedDict):
 
 # Order matters for the UI dropdown — hero case first, references at the end.
 SAMPLES: dict[str, Sample] = {
+    "ph_sa_hero": {
+        "label": "Philippines → Saudi Arabia · Maria, 23, domestic worker (HERO)",
+        "path": _DEMO_DIR / "ph_sa_domestic_hero.txt",
+        "origin": "PH",
+        "destination": "SA",
+        "description": "3-yr live-in, SAR 750/mo probation then SAR 1,200. SAR 15K recruitment debt + "
+                       "SAR 5K performance bond. Passport + phone surrendered on arrival. Explicit "
+                       "embassy-contact ban (Clause 10). Substitution clause (Clause 14). Arabic "
+                       "version prevails. Built to push every agent to maximum and trigger the "
+                       "rebuttal turn hardest.",
+        "tier": "trafficking",
+        "emoji": "🚨",
+    },
     "ph_sa_domestic": {
-        "label": "Philippines → Saudi Arabia · Domestic worker (hero demo)",
+        "label": "Philippines → Saudi Arabia · Domestic worker (alt)",
         "path": _DEMO_DIR / "ph_sa_domestic_worker.txt",
         "origin": "PH",
         "destination": "SA",
         "description": "Live-in domestic worker, 2-yr contract, SAR 1,400/mo. Passport retention, "
-                       "SAR 12K recruitment debt, unlimited hours. Built for the disagreement reel.",
+                       "SAR 12K recruitment debt, unlimited hours. Original demo case.",
         "tier": "bad",
         "emoji": "🏠",
     },

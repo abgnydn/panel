@@ -158,27 +158,99 @@ def run_panel(
         except Exception:
             pass
 
-    # Surface the Negotiator agent's structured output at the top level so the
-    # v2 frontend's Negotiation scene reads it without re-mapping. The same
-    # data lives in outputs["negotiator"] under .agents already.
+    # LLM outputs can be lossy. Coerce shapes here so the frontend never
+    # sees a string where it expects a list, etc.
+    def _as_list(v: Any) -> list:
+        if isinstance(v, list):
+            return [x for x in v if isinstance(x, dict)] if v and isinstance(v[0], dict) else v
+        return []
+
+    def _as_dict(v: Any) -> dict:
+        return v if isinstance(v, dict) else {}
+
+    def _as_str(v: Any) -> str:
+        return v if isinstance(v, str) else ""
+
     negotiator_out = outputs.get("negotiator") or {}
+
+    # Normalise negotiator field names. The agent prompt produces snake_case
+    # names with `question_in_l1`, `clause_reference`, etc.; the frontend reads
+    # `question_l1`, `clause`. Map them here so the contract stays stable
+    # regardless of what the agent emits.
+    def _norm_question(q: dict) -> dict:
+        if not isinstance(q, dict):
+            return {}
+        return {
+            "clause":      q.get("clause") or q.get("clause_reference") or "",
+            "question_l1": q.get("question_l1") or q.get("question_in_l1") or "",
+            "question_en": q.get("question_en") or q.get("question_in_english") or "",
+            "why_ask":     q.get("why_ask") or "",
+            "listen_for":  q.get("listen_for") or q.get("what_to_listen_for") or "",
+        }
+
+    def _norm_redflag(r: dict) -> dict:
+        if not isinstance(r, dict):
+            return {}
+        return {
+            "if_recruiter_says": r.get("if_recruiter_says") or "",
+            "what_it_means":     r.get("what_it_means") or r.get("what_it_actually_means") or r.get("what_it_actual_means") or "",
+            "your_move":         r.get("your_move") or "",
+        }
+
+    def _norm_priority(p: dict) -> dict:
+        if not isinstance(p, dict):
+            return {}
+        return {
+            "clause_number":          p.get("clause_number") or p.get("clause") or "",
+            "topic":                  p.get("topic") or "",
+            "what_to_say_in_l1":      p.get("what_to_say_in_l1") or "",
+            "what_to_say_in_english": p.get("what_to_say_in_english") or "",
+            "fallback_if_refused":    p.get("fallback_if_refused") or "",
+            "walk_away_threshold":    p.get("walk_away_threshold") or "",
+        }
+
     negotiation_block = {
-        "strategy":         negotiator_out.get("negotiation_strategy", "") or "",
-        "priority_pushback": negotiator_out.get("priority_pushback", {}) or {},
-        "questions":        negotiator_out.get("questions_to_ask", []) or [],
-        "red_flags":        negotiator_out.get("red_flag_responses", []) or [],
+        "strategy":          _as_str(negotiator_out.get("negotiation_strategy")),
+        "priority_pushback": _norm_priority(_as_dict(negotiator_out.get("priority_pushback"))),
+        "questions":         [_norm_question(q) for q in _as_list(negotiator_out.get("questions_to_ask"))],
+        "red_flags":         [_norm_redflag(r) for r in _as_list(negotiator_out.get("red_flag_responses"))],
     }
 
-    # Same idea for refusals + pushbacks: pull off the checklist output if
-    # one exists, otherwise derive from the negotiator's priority pushback.
+    def _norm_refusal(r: dict) -> dict:
+        if not isinstance(r, dict):
+            return {"refusal": "", "reason": ""}
+        return {
+            "refusal": r.get("refusal") or "",
+            "reason":  r.get("reason") or r.get("reason_short") or "",
+        }
+
+    def _norm_pushback(p: dict) -> dict:
+        if not isinstance(p, dict):
+            return {"clause_number": "", "ask": "", "suggested": ""}
+        return {
+            "clause_number": p.get("clause_number") or p.get("clause") or "",
+            "ask":           p.get("ask") or "",
+            "suggested":     p.get("suggested") or p.get("suggested_text") or "",
+        }
+
+    def _norm_checklist_item(it: dict) -> dict:
+        if not isinstance(it, dict):
+            return {"priority": "medium", "action": "", "details": ""}
+        return {
+            "priority": it.get("priority") or "medium",
+            "action":   it.get("action") or "",
+            "details":  it.get("details") or "",
+        }
+
     if isinstance(checklist_out, dict) and not checklist_out.get("_error"):
-        refusals  = checklist_out.get("things_to_refuse", []) or []
-        pushbacks = checklist_out.get("recruiter_pushback", []) or []
+        phases = _as_dict(checklist_out.get("phases"))
+        refusals  = [_norm_refusal(r) for r in _as_list(checklist_out.get("things_to_refuse"))]
+        pushbacks = [_norm_pushback(p) for p in _as_list(checklist_out.get("recruiter_pushback"))]
         checklist_phases = {
-            "before_departure":   checklist_out.get("phases", {}).get("before_departure", []),
-            "on_arrival":         checklist_out.get("phases", {}).get("on_arrival", []),
-            "during_employment":  checklist_out.get("phases", {}).get("during_employment", []),
-            "exit_emergency":     checklist_out.get("phases", {}).get("exit_emergency", []),
+            "before_departure":  [_norm_checklist_item(x) for x in _as_list(phases.get("before_departure"))],
+            "on_arrival":        [_norm_checklist_item(x) for x in _as_list(phases.get("on_arrival"))],
+            "during_employment": [_norm_checklist_item(x) for x in _as_list(phases.get("during_employment"))],
+            "exit_emergency":    [_norm_checklist_item(x) for x in _as_list(phases.get("exit_emergency"))],
         }
     else:
         refusals = []

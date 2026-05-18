@@ -22,9 +22,16 @@ def disabled() -> bool:
     return os.environ.get("PANEL_CACHE", "1") == "0"
 
 
+# Bump SCHEMA_VERSION whenever the moderator response shape changes so stale
+# entries from older deploys don't get served to a frontend that expects new fields.
+SCHEMA_VERSION = "v4"
+
+
 def key(contract_text: str, situation: str, destination: str,
         origin: str, worker_l1: str) -> str:
     h = hashlib.sha256()
+    h.update(SCHEMA_VERSION.encode("utf-8"))
+    h.update(b"\x00")
     for part in (contract_text, situation, destination, origin, worker_l1):
         h.update((part or "").encode("utf-8"))
         h.update(b"\x00")
