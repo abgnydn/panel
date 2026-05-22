@@ -9,6 +9,7 @@ import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
 import type { ReelItem } from "../api/mock-result";
+import { Store } from "../state";
 import { AGENT_BY_ID, agentIconHtml } from "../ui/agents";
 import type { AgentId } from "../ui/agents";
 import { icon } from "../ui/icons";
@@ -34,7 +35,10 @@ const SEVERITY_TINT: Record<number, [string, string]> = {
 
 export function renderReel(ctx: SceneCtx): void {
   const { root, goto } = ctx;
-  const reel = MOCK_RESULT.disagreement_reel;
+  const result = Store.get().result ?? MOCK_RESULT;
+  const reel = Array.isArray(result.disagreement_reel) && result.disagreement_reel.length
+    ? result.disagreement_reel
+    : MOCK_RESULT.disagreement_reel;
   const hero = reel[0];
   const sub = reel.slice(1, 3);
 
@@ -81,6 +85,7 @@ export function renderReel(ctx: SceneCtx): void {
 }
 
 function heroCardHtml(item: ReelItem): string {
+  const tensions = Array.isArray(item?.tensions) ? item.tensions : [];
   const [fg, bg] = SEVERITY_TINT[item.severity] || SEVERITY_TINT[5];
   const label = SEVERITY_LABEL[item.severity] || "DECLARED";
   return `
@@ -89,9 +94,9 @@ function heroCardHtml(item: ReelItem): string {
         <div class="reel-rank-big">#${item.rank}</div>
         <div class="reel-hero-main">
           <span class="reel-sev-pill"><span class="dot"></span>${label} · sev ${item.severity}</span>
-          <h2 class="reel-topic">${item.topic}</h2>
-          <div class="reel-tensions">${item.tensions.map(tensionHtml).join("")}</div>
-          <div class="reel-meaning">${item.why_it_matters}</div>
+          <h2 class="reel-topic">${item.topic ?? ""}</h2>
+          <div class="reel-tensions">${tensions.map(tensionHtml).join("")}</div>
+          <div class="reel-meaning">${item.why_it_matters ?? ""}</div>
         </div>
       </div>
     </div>
@@ -99,15 +104,16 @@ function heroCardHtml(item: ReelItem): string {
 }
 
 function subCardHtml(item: ReelItem): string {
+  const tensions = Array.isArray(item?.tensions) ? item.tensions.slice(0, 3) : [];
   const [fg, bg] = SEVERITY_TINT[item.severity] || SEVERITY_TINT[5];
   const label = SEVERITY_LABEL[item.severity] || "DECLARED";
   return `
     <div class="reel-sub-card" style="--reel-fg:${fg};--reel-bg:${bg};">
       <span class="reel-sev-pill"><span class="dot"></span>${label} · sev ${item.severity}</span>
       <div class="reel-rank-small">#${item.rank}</div>
-      <h3 class="reel-topic-sm">${item.topic}</h3>
-      <div class="reel-tensions">${item.tensions.slice(0, 3).map(tensionHtml).join("")}</div>
-      <div class="reel-meaning-sm">${item.why_it_matters}</div>
+      <h3 class="reel-topic-sm">${item.topic ?? ""}</h3>
+      <div class="reel-tensions">${tensions.map(tensionHtml).join("")}</div>
+      <div class="reel-meaning-sm">${item.why_it_matters ?? ""}</div>
     </div>
   `;
 }

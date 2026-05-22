@@ -14,7 +14,8 @@
 import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
-import type { AgentOutput } from "../api/mock-result";
+import type { AgentOutput, PanelResult } from "../api/mock-result";
+import { runPanelWithFallback } from "../api/panel";
 import { Store } from "../state";
 import { LANGUAGES } from "../data/samples";
 import { AGENTS, agentIconHtml } from "../ui/agents";
@@ -106,22 +107,60 @@ export function renderDeliberation(ctx: SceneCtx): void {
   gsap.fromTo(".delib-foot",
     { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.7, ease: "power3.out", clearProps: "transform" });
 
-  // Staggered agent reveal — mocked
-  let completed = 0;
   const progressEl = root.querySelector<HTMLSpanElement>("[data-progress]")!;
-  AGENTS.forEach((a) => {
-    const out = MOCK_RESULT.agents[a.id] as AgentOutput | undefined;
+
+  // Call backend (Mosaic AI / 6 agents in parallel). Backend is slow
+  // (30-60s for live; instant for mock). While waiting, keep skeletons.
+  if (sample) {
+    const t0 = performance.now();
+    runPanelWithFallback({
+      sample_id: sample.id,
+      situation: intake.situation || "",
+      destination_country: sample.destination,
+      origin_country: sample.origin,
+      worker_l1: intake.language,
+    }).then(({ result, source }) => {
+      Store.setResult(result, source);
+      revealAgentsStaggered(root, result, performance.now() - t0, source, cont, progressEl);
+    });
+  } else {
+    // Upload path — not wired to backend OCR yet, fall back to mock.
+    revealAgentsStaggered(root, MOCK_RESULT, 0, "mock", cont, progressEl);
+  }
+}
+
+/** Stagger-reveal agents from a live (or mock) result, keeping the
+ *  cinematic feel even when the backend returned all 6 at once. */
+function revealAgentsStaggered(
+  root: HTMLElement,
+  result: PanelResult,
+  totalElapsedMs: number,
+  source: "live" | "mock",
+  cont: HTMLButtonElement,
+  progressEl: HTMLSpanElement,
+): void {
+  const order = ["triage", "lawyer", "translator", "peer_advocate", "negotiator", "regulator"];
+  const baseDelay = source === "mock" ? 1200 : 200;
+  const stepDelay = source === "mock" ? 900 : 250;
+  let completed = 0;
+
+  order.forEach((agentId, i) => {
+    const out = result.agents[agentId] as AgentOutput | undefined;
     if (!out) return;
-    const delayMs = (REVEAL_AT[a.id] ?? 3) * 1000;
-    window.setTimeout(() => settlePane(root, a.id, out, () => {
-      completed += 1;
-      progressEl.textContent = `${completed} / 6`;
-      if (completed === 6) {
-        cont.disabled = false;
-        cont.classList.add("is-ready");
-        progressEl.textContent = "All agents settled";
-      }
-    }), delayMs);
+    window.setTimeout(() => {
+      settlePane(root, agentId, out, () => {
+        completed += 1;
+        progressEl.textContent = `${completed} / 6`;
+        if (completed === 6) {
+          cont.disabled = false;
+          cont.classList.add("is-ready");
+          const label = source === "live"
+            ? `All agents settled · ${(totalElapsedMs / 1000).toFixed(1)}s on Mosaic AI`
+            : "All agents settled · mock fallback";
+          progressEl.textContent = label;
+        }
+      });
+    }, baseDelay + i * stepDelay);
   });
 }
 

@@ -14,13 +14,28 @@ import type { SceneCtx } from "./router";
 
 export function renderNegotiation(ctx: SceneCtx): void {
   const { root, goto } = ctx;
-  const n = MOCK_RESULT.negotiation;
+  const result = Store.get().result ?? MOCK_RESULT;
+  const n = result.negotiation || MOCK_RESULT.negotiation;
+  if (!n || !n.priority_pushback) {
+    // Defensive — back to recommendation
+    goto("recommendation");
+    return;
+  }
   const intake = Store.get().intake;
   const showEnglish = intake.language !== "en";
   const langName = LANGUAGES[intake.language] || intake.language;
 
-  const pb = n.priority_pushback;
-  const questionsHtml = n.questions.map((q, i) => `
+  const pb: any = (n.priority_pushback && typeof n.priority_pushback === "object") ? n.priority_pushback : {};
+  const pbClause = pb.clause_number ?? "—";
+  const pbTopic = typeof pb.topic === "string" ? pb.topic.replace(/_/g, " ") : "general";
+  const pbL1 = pb.what_to_say_in_l1 ?? "";
+  const pbEn = pb.what_to_say_in_english ?? "";
+  const pbFallback = pb.fallback_if_refused ?? "";
+  const pbWalkaway = pb.walk_away_threshold ?? "";
+  const hasPriority = pbL1 || pbEn || pb.topic;
+  const questions = Array.isArray(n.questions) ? n.questions : [];
+  const redFlags  = Array.isArray(n.red_flags) ? n.red_flags : [];
+  const questionsHtml = questions.map((q: any, i: number) => `
     <article class="neg-question" style="--idx:'${i + 1}';">
       <header class="neg-question-head">
         <span class="neg-question-num">Q${i + 1}</span>
@@ -35,7 +50,7 @@ export function renderNegotiation(ctx: SceneCtx): void {
     </article>
   `).join("");
 
-  const redFlagsHtml = n.red_flags.map((r) => `
+  const redFlagsHtml = redFlags.map((r: any) => `
     <article class="neg-redflag">
       <div class="neg-redflag-says">
         <span class="neg-redflag-tag">If the recruiter says</span>
@@ -68,20 +83,20 @@ export function renderNegotiation(ctx: SceneCtx): void {
         <p>${escape(n.strategy)}</p>
       </article>
 
-      <article class="neg-priority">
+      ${hasPriority ? `<article class="neg-priority">
         <header class="neg-priority-head">
-          <span class="neg-priority-tag"><span class="dot"></span>Priority pushback · Clause ${pb.clause_number} · ${pb.topic.replace(/_/g, " ")}</span>
+          <span class="neg-priority-tag"><span class="dot"></span>Priority pushback · Clause ${pbClause} · ${pbTopic}</span>
         </header>
-        <p class="neg-priority-l1">${escape(pb.what_to_say_in_l1)}</p>
-        ${showEnglish ? `<p class="neg-priority-en"><em>EN ·</em> ${escape(pb.what_to_say_in_english)}</p>` : ""}
+        <p class="neg-priority-l1">${escape(pbL1)}</p>
+        ${showEnglish && pbEn ? `<p class="neg-priority-en"><em>EN ·</em> ${escape(pbEn)}</p>` : ""}
         <div class="neg-priority-foot">
-          <div class="neg-meta"><b>If refused</b>${escape(pb.fallback_if_refused)}</div>
-          <div class="neg-meta neg-walkaway"><b>Walk away if</b>${escape(pb.walk_away_threshold)}</div>
+          ${pbFallback ? `<div class="neg-meta"><b>If refused</b>${escape(pbFallback)}</div>` : ""}
+          ${pbWalkaway ? `<div class="neg-meta neg-walkaway"><b>Walk away if</b>${escape(pbWalkaway)}</div>` : ""}
         </div>
-      </article>
+      </article>` : ""}
 
       <section class="neg-section">
-        <h3 class="neg-section-title">Questions to ask · ${n.questions.length} of them</h3>
+        <h3 class="neg-section-title">Questions to ask · ${questions.length} of them</h3>
         <div class="neg-questions">${questionsHtml}</div>
       </section>
 
@@ -122,8 +137,9 @@ export function renderNegotiation(ctx: SceneCtx): void {
     { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, delay: 1.0, ease: "power3.out", clearProps: "transform" });
 }
 
-function escape(s: string): string {
-  return s
+function escape(s: any): string {
+  if (s === null || s === undefined) return "";
+  return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");

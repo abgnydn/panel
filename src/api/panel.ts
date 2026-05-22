@@ -11,8 +11,10 @@
 import { MOCK_RESULT } from "./mock-result";
 import type { PanelResult } from "./mock-result";
 
-const API_BASE =
-  (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://127.0.0.1:8000";
+// Empty base = relative URLs (works when frontend + API are same-origin —
+// either Databricks Apps deploy or Vite dev with the proxy in vite.config.ts).
+// Override with VITE_API_BASE if pointing at a separate FastAPI host.
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
 
 export type RunRequest = {
   sample_id?: string;

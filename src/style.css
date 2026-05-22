@@ -2007,14 +2007,410 @@ textarea:focus-visible {
   #globe-canvas { height: 340px; }
 }
 
-/* Mobile */
-@media (max-width: 720px) {
-  main { padding: 2rem 1.25rem; }
-  .display-title { font-size: 96px; }
-  .brand-mark svg { width: 48px; height: 48px; }
-  .stat { font-size: 12px; padding: 8px 14px; }
-  .stat b { font-size: 16px; }
-  .display-heading { font-size: 36px; }
+/* ============================================================================
+   Genie chat
+   ============================================================================ */
+.genie {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.chat-thread {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  min-height: 280px;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-thread:empty::before {
+  content: "Pick a question below or type your own.";
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 14px;
+}
+.chat-bubble {
+  max-width: 86%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.chat-bubble-user {
+  align-self: flex-end;
+  background: var(--ink);
+  color: #fff;
+}
+.chat-bubble-genie {
+  align-self: flex-start;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-bubble-text { line-height: 1.55; }
+.chat-thinking {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.chat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--muted);
+  animation: chatDot 1.2s ease-in-out infinite;
+}
+.chat-dot:nth-child(2) { animation-delay: 0.18s; }
+.chat-dot:nth-child(3) { animation-delay: 0.36s; }
+@keyframes chatDot {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); }
+  40%           { opacity: 1;   transform: scale(1); }
+}
+.chat-sql {
+  font-size: 12px;
+  background: var(--page);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  margin-top: 4px;
+}
+.chat-sql summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.chat-sql pre {
+  margin: 8px 0 0;
+  overflow-x: auto;
+}
+.chat-sql code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink);
+}
+.chat-table {
+  margin-top: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.chat-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.chat-table th, .chat-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.chat-table th {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  background: var(--page);
+}
+.chat-table-more {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  background: var(--page);
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat-sug-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+.chat-sug-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chat-chip {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 180ms var(--easing);
+  text-align: left;
+}
+.chat-chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-xs);
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 4px 4px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.chat-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  padding: 12px 0;
+}
+.chat-input input::placeholder { color: var(--muted); }
+.chat-input input:disabled { opacity: 0.6; }
+
+/* ===================================================================== */
+/* Mobile-first responsive overrides                                       */
+/* Two breakpoints: tablet (≤960px) collapses multi-col grids; phone       */
+/* (≤640px) compacts type, stacks footers, makes tabs scroll horizontally. */
+/* ===================================================================== */
+
+/* Tablet */
+@media (max-width: 960px) {
+  main { padding: 2.2rem 1.5rem; }
+  .display-title { font-size: clamp(72px, 18vw, 140px); }
+  .display-heading { font-size: clamp(32px, 6vw, 56px); }
+  .lede { font-size: 1rem; }
+
+  /* Two-col layouts collapse to one */
+  .urgency-gauge,
+  .whatif-metrics,
+  .dash-canvas-wrap,
+  .reel-hero-grid,
+  .pushback-card-head,
+  .neg-priority-foot,
+  .neg-question-foot,
+  .rec-checklist .chk-item-row { grid-template-columns: 1fr !important; }
+
+  .reel-sub-grid { grid-template-columns: 1fr; }
+  .rec-contacts { grid-template-columns: 1fr; }
+  .neg-questions { grid-template-columns: 1fr; }
+  .neg-redflags { grid-template-columns: 1fr; }
+  .refusal-list,
+  .pushback-list { grid-template-columns: 1fr; }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  /* Page shell */
+  main { padding: 1.25rem 1rem; align-items: flex-start; }
+
+  /* Headings + type */
+  .display-title { font-size: clamp(56px, 22vw, 100px); line-height: 0.95; }
+  .display-heading { font-size: clamp(28px, 8vw, 40px); line-height: 1.1; }
+  .lede { font-size: 0.95rem; line-height: 1.55; }
+  .eyebrow { font-size: 11px; }
+
+  /* Brand */
+  .brand-mark svg { width: 44px; height: 44px; }
+  .stats { flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .stat { font-size: 11px; padding: 6px 10px; }
+  .stat b { font-size: 14px; }
+
+  /* CTA buttons: full-width tap targets */
+  .cta, .cta-ghost {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    min-height: 48px;
+  }
+
+  /* Footers always stack on phone */
+  .delib-foot,
+  .intake-foot,
+  .export-row,
+  .export-deeper {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border-radius: var(--radius-lg) !important;
+  }
+
+  /* Intake */
   .sample-grid { grid-template-columns: 1fr; }
-  .intake-foot { flex-direction: column; align-items: stretch; padding: 14px; border-radius: var(--radius-lg); }
+  .sample-card { padding: 16px; }
+  .sample-card-head { gap: 8px; }
+  .sample-corridor { font-size: 14px; flex-wrap: wrap; }
+  .sample-label { font-size: 14px; line-height: 1.35; }
+  .sample-desc { font-size: 13px; }
+
+  /* Deliberation panes — single column stack */
+  .agent-grid { grid-template-columns: 1fr !important; }
+  .agent-pane { padding: 14px; }
+  .agent-pane-head { gap: 10px; }
+  .agent-pane-avatar { width: 36px; height: 36px; }
+  .agent-pane-name { font-size: 14px; }
+  .agent-pane-tagline { font-size: 12px; }
+  .agent-pane-verdict { font-size: 13px; }
+  .agent-pane-findings li { font-size: 12px; }
+
+  /* Reel */
+  .reel-hero { padding: 18px; }
+  .reel-rank-big { font-size: 56px; line-height: 1; }
+  .reel-topic { font-size: 22px; }
+  .reel-topic-sm { font-size: 18px; }
+  .reel-sub-card { padding: 16px; }
+  .reel-tensions { gap: 8px; }
+  .reel-tension { padding: 10px 12px; }
+  .reel-tension-agent { font-size: 12px; }
+  .reel-tension-verdict { font-size: 13px; }
+  .reel-meaning { font-size: 13px; }
+
+  /* Rebuttals */
+  .rebuttal-card { padding: 14px; }
+
+  /* Negotiation */
+  .negotiation { padding: 0; }
+  .neg-strategy,
+  .neg-priority,
+  .neg-question,
+  .neg-redflag { padding: 14px; }
+  .neg-priority-tag { font-size: 11px; flex-wrap: wrap; }
+  .neg-priority-l1,
+  .neg-question-l1 { font-size: 1rem; }
+  .neg-section-title { font-size: 18px; }
+
+  /* Recommendation */
+  .recommendation { padding: 0; }
+  .urgency-gauge { padding: 18px; }
+  .urgency-value { font-size: 64px; line-height: 1; }
+  .urgency-of { font-size: 18px; }
+  .urgency-verdict { font-size: 13px; }
+  .rec-letter { padding: 22px 18px; }
+  .rec-letter-mark { font-size: 64px; top: 4px; right: 8px; }
+  .rec-tldr { font-size: 1rem; line-height: 1.6; }
+  .rec-block { padding: 18px; }
+  .rec-block-title { font-size: 17px; }
+  .rec-action-list li { font-size: 0.95rem; }
+
+  /* Checklist tabs — horizontal scroll on phone */
+  .chk-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 6px;
+    margin: 0 -4px;
+  }
+  .chk-tabs::-webkit-scrollbar { display: none; }
+  .chk-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  .chk-item { padding: 12px; }
+  .chk-item-prio { font-size: 10px; padding: 3px 7px; }
+  .chk-item-action { font-size: 0.95rem; }
+  .chk-item-details { font-size: 13px; }
+
+  /* What-if */
+  .whatif-row { padding: 10px 12px; font-size: 13px; }
+  .whatif-num { font-size: 36px; }
+  .whatif-arrow { font-size: 24px; }
+
+  /* Refusal / pushback cards */
+  .refusal-card,
+  .pushback-card { padding: 14px; }
+  .pushback-clause { font-size: 11px; padding: 3px 8px; }
+  .pushback-ask { font-size: 0.95rem; }
+
+  /* QR + modals */
+  .qr-modal { padding: 16px; align-items: flex-start; }
+  .qr-modal-card { max-width: 100%; padding: 22px 18px; max-height: 92vh; overflow-y: auto; }
+  .qr-img { width: 200px; height: 200px; }
+
+  /* Dashboard */
+  .dashboard { padding: 0; }
+  .dash-canvas-wrap { grid-template-columns: 1fr !important; gap: 16px; }
+  .dash-canvas { padding: 16px; min-height: 280px; }
+  .dash-legend { padding: 14px; }
+  .legend-row { padding: 8px 0; font-size: 12px; }
+  .legend-label { font-size: 12px; }
+  .legend-value { font-size: 13px; }
+  .dash-kpis { grid-template-columns: 1fr 1fr !important; gap: 8px; }
+  .kpi { padding: 12px; }
+  .kpi-label { font-size: 11px; }
+  .kpi-value { font-size: 22px; }
+
+  /* Genie chat */
+  .genie { padding: 0; }
+  .chat-thread { padding: 12px; max-height: none; }
+  .chat-bubble { padding: 12px 14px; font-size: 14px; max-width: 100%; }
+  .chat-bubble-text { font-size: 14px; }
+  .chat-input { flex-direction: column; gap: 8px; padding: 12px; }
+  .chat-input input { width: 100%; font-size: 16px; /* prevent iOS zoom */ }
+  .chat-input button { width: 100%; }
+  .chat-suggestions { padding: 12px; }
+  .chat-sug-row { flex-wrap: wrap; gap: 6px; }
+  .chat-chip { font-size: 12px; padding: 8px 12px; }
+  .chat-sql { font-size: 11px; }
+  .chat-sql pre { white-space: pre; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Tables in chat — horizontal scroll */
+  .chat-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .chat-table table { font-size: 12px; min-width: max-content; }
+  .chat-table th,
+  .chat-table td { padding: 6px 8px; white-space: nowrap; }
+
+  /* Cold-open: keep canvas but bring CTA in close */
+  .cold-open { padding: 16px; }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  main { padding: 1rem 0.75rem; }
+  .display-title { font-size: 56px; }
+  .display-heading { font-size: 26px; }
+  .urgency-value { font-size: 52px; }
+  .reel-rank-big { font-size: 44px; }
+  .rec-letter-mark { font-size: 48px; }
+}
+
+/* Touch device tweaks — bigger tap targets, no hover effects */
+@media (hover: none) and (pointer: coarse) {
+  .cta:hover,
+  .cta-ghost:hover,
+  .sample-card:hover { transform: none; }
+  .cta, .cta-ghost { min-height: 48px; }
+  button, a { -webkit-tap-highlight-color: transparent; }
 }

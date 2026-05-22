@@ -6,6 +6,7 @@
  * need re-render hooks.
  */
 import type { Sample } from "./data/samples";
+import type { PanelResult } from "./api/mock-result";
 
 export type IntakeChoice = {
   sample?: Sample;
@@ -16,6 +17,8 @@ export type IntakeChoice = {
 
 type StateShape = {
   intake: IntakeChoice;
+  result?: PanelResult;       // populated by deliberation when backend returns
+  source?: "live" | "mock";    // which path delivered the result
 };
 
 const state: StateShape = {
@@ -31,6 +34,11 @@ export const Store = {
   },
   setIntake(patch: Partial<IntakeChoice>) {
     state.intake = { ...state.intake, ...patch };
+    listeners.forEach((l) => l(state));
+  },
+  setResult(result: PanelResult, source: "live" | "mock") {
+    state.result = result;
+    state.source = source;
     listeners.forEach((l) => l(state));
   },
   subscribe(l: Listener): () => void {

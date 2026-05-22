@@ -10,6 +10,7 @@ import { gsap } from "gsap";
 
 import { MOCK_RESULT } from "../api/mock-result";
 import type { Rebuttal } from "../api/mock-result";
+import { Store } from "../state";
 import { AGENT_BY_ID, agentIconHtml } from "../ui/agents";
 import type { AgentId } from "../ui/agents";
 import { icon } from "../ui/icons";
@@ -24,8 +25,9 @@ const STANCE: Record<Rebuttal["stance"], { color: string; label: string; iconKey
 export function renderRebuttals(ctx: SceneCtx): void {
   const { root, goto } = ctx;
 
+  const result = Store.get().result ?? MOCK_RESULT;
   const cards = ["lawyer", "translator", "regulator", "peer_advocate", "triage", "negotiator"]
-    .map((id) => MOCK_RESULT.rebuttals[id])
+    .map((id) => result.rebuttals[id])
     .filter((r): r is Rebuttal => !!r)
     .map(rebuttalCardHtml)
     .join("");

@@ -43,8 +43,14 @@ const PRIORITY_COLOR: Record<ChecklistItem["priority"], string> = {
 
 export function renderRecommendation(ctx: SceneCtx): void {
   const { root, goto } = ctx;
-  const r = MOCK_RESULT.recommendation;
-  const urgency = MOCK_RESULT.final_urgency_score;
+  const result = Store.get().result ?? MOCK_RESULT;
+  // Debug — leave on while we shake out backend shape issues.
+  // eslint-disable-next-line no-console
+  console.log("[Recommendation] result shape", result);
+  const r = result.recommendation || MOCK_RESULT.recommendation;
+  const actionItems = Array.isArray(r.action_items) ? r.action_items : [];
+  const contacts = Array.isArray(r.contacts) ? r.contacts : [];
+  const urgency = typeof result.final_urgency_score === "number" ? result.final_urgency_score : 5;
   const intake = Store.get().intake;
   const langName = LANGUAGES[intake.language] || intake.language;
 
@@ -61,17 +67,17 @@ export function renderRecommendation(ctx: SceneCtx): void {
 
       <article class="rec-letter">
         <div class="rec-letter-mark">¶</div>
-        <p class="rec-tldr">${escape(r.tldr)}</p>
+        <p class="rec-tldr">${escape(r.tldr || "")}</p>
       </article>
 
       <section class="rec-block">
         <h3 class="rec-block-title">What to do</h3>
-        <ul class="rec-action-list">${r.action_items.map((a) => `<li>${escape(a)}</li>`).join("")}</ul>
+        <ul class="rec-action-list">${actionItems.map((a: any) => `<li>${escape(typeof a === "string" ? a : (a?.action ?? ""))}</li>`).join("")}</ul>
       </section>
 
       <section class="rec-block">
         <h3 class="rec-block-title">Save these contacts offline</h3>
-        <div class="rec-contacts">${r.contacts.map(contactHtml).join("")}</div>
+        <div class="rec-contacts">${contacts.map(contactHtml).join("")}</div>
       </section>
 
       ${checklistSectionHtml()}
@@ -133,19 +139,22 @@ export function renderRecommendation(ctx: SceneCtx): void {
 
   // ---- Export -------------------------------------------------------------
   const lang = intake.language;
+  const exportResult = result;
   root.querySelector<HTMLButtonElement>("#export-md")!
-    .addEventListener("click", () => exportMarkdown(MOCK_RESULT, lang));
+    .addEventListener("click", () => exportMarkdown(exportResult, lang));
   root.querySelector<HTMLButtonElement>("#export-pdf")!
-    .addEventListener("click", () => downloadPDF(MOCK_RESULT, lang));
+    .addEventListener("click", () => downloadPDF(exportResult, lang));
   root.querySelector<HTMLButtonElement>("#export-wa")!
-    .addEventListener("click", () => { window.open(whatsappShareURL(MOCK_RESULT), "_blank"); });
+    .addEventListener("click", () => { window.open(whatsappShareURL(exportResult), "_blank"); });
   root.querySelector<HTMLButtonElement>("#export-qr")!
     .addEventListener("click", async () => {
-      const dataUrl = await generateQRDataURL(MOCK_RESULT);
+      const dataUrl = await generateQRDataURL(exportResult);
       openQRModal(dataUrl);
     });
   root.querySelector<HTMLButtonElement>("#go-dashboard")!
     .addEventListener("click", () => goto("dashboard"));
+  root.querySelector<HTMLButtonElement>("#go-genie")!
+    .addEventListener("click", () => goto("genie"));
 
   // ---- Entrance animations ------------------------------------------------
   gsap.fromTo(".rec-head",        { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: "power3.out", clearProps: "transform" });
@@ -193,15 +202,20 @@ function contactHtml(c: { name: string; phone?: string; whatsapp?: string }): st
 }
 
 function checklistSectionHtml(): string {
-  const phases = Object.entries(MOCK_RESULT.checklist) as [keyof typeof MOCK_RESULT.checklist, ChecklistItem[]][];
+  const result = Store.get().result ?? MOCK_RESULT;
+  const checklistObj = (result.checklist && typeof result.checklist === "object") ? result.checklist : MOCK_RESULT.checklist;
+  const phases = Object.entries(checklistObj) as [keyof typeof MOCK_RESULT.checklist, ChecklistItem[]][];
   const tabsHtml = phases.map(([k], i) =>
     `<button class="chk-tab ${i === 0 ? "is-active" : ""}" data-phase="${k}">${PHASE_LABEL[k]}</button>`,
   ).join("");
-  const panelsHtml = phases.map(([k, items], i) => `
+  const panelsHtml = phases.map(([k, items], i) => {
+    const safeItems = Array.isArray(items) ? items.filter((it: any) => it && typeof it === "object") : [];
+    return `
     <div class="chk-panel ${i === 0 ? "" : "is-hidden"}" data-phase="${k}">
-      ${items.map(checklistItemHtml).join("")}
+      ${safeItems.map(checklistItemHtml).join("")}
     </div>
-  `).join("");
+  `;
+  }).join("");
 
   return `
     <section class="rec-block rec-checklist">
@@ -213,25 +227,30 @@ function checklistSectionHtml(): string {
 }
 
 function checklistItemHtml(it: ChecklistItem): string {
-  const color = PRIORITY_COLOR[it.priority] || "#64748b";
+  const priority = (it?.priority || "medium") as ChecklistItem["priority"];
+  const action = it?.action || "";
+  const details = it?.details || "";
+  const color = PRIORITY_COLOR[priority] || "#64748b";
   return `
     <div class="chk-item" style="--prio:${color};">
       <div class="chk-item-row">
-        <span class="chk-item-prio">${it.priority.toUpperCase()}</span>
-        <span class="chk-item-action">${escape(it.action)}</span>
+        <span class="chk-item-prio">${String(priority).toUpperCase()}</span>
+        <span class="chk-item-action">${escape(action)}</span>
       </div>
-      ${it.details ? `<div class="chk-item-details">${escape(it.details)}</div>` : ""}
+      ${details ? `<div class="chk-item-details">${escape(details)}</div>` : ""}
     </div>
   `;
 }
 
 function refusalsSectionHtml(): string {
-  if (!MOCK_RESULT.refusals.length) return "";
+  const result = Store.get().result ?? MOCK_RESULT;
+  const refusals = Array.isArray(result.refusals) ? result.refusals : [];
+  if (!refusals.length) return "";
   return `
     <section class="rec-block rec-refusals">
       <h3 class="rec-block-title">Do <em>not</em> agree to</h3>
       <div class="refusal-list">
-        ${MOCK_RESULT.refusals.map((r) => `
+        ${refusals.map((r: any) => `
           <article class="refusal-card">
             <div class="refusal-text">${escape(r.refusal)}</div>
             <div class="refusal-reason">${escape(r.reason)}</div>
@@ -243,12 +262,14 @@ function refusalsSectionHtml(): string {
 }
 
 function pushbacksSectionHtml(): string {
-  if (!MOCK_RESULT.pushbacks.length) return "";
+  const result = Store.get().result ?? MOCK_RESULT;
+  const pushbacks = Array.isArray(result.pushbacks) ? result.pushbacks : [];
+  if (!pushbacks.length) return "";
   return `
     <section class="rec-block rec-pushbacks">
       <h3 class="rec-block-title">Ask the recruiter to change before signing</h3>
       <div class="pushback-list">
-        ${MOCK_RESULT.pushbacks.map((p) => `
+        ${pushbacks.map((p: any) => `
           <article class="pushback-card">
             <header class="pushback-card-head">
               <span class="pushback-clause">Clause ${p.clause_number}</span>
@@ -266,7 +287,9 @@ function pushbacksSectionHtml(): string {
 }
 
 function whatIfSectionHtml(urgency: number): string {
-  const checks = MOCK_RESULT.pushbacks.map((p, i) => `
+  const result = Store.get().result ?? MOCK_RESULT;
+  const pushbacksArr = Array.isArray(result.pushbacks) ? result.pushbacks : [];
+  const checks = pushbacksArr.map((p: any, i: number) => `
     <label class="whatif-row">
       <input type="checkbox" class="whatif-check" data-i="${i}">
       <span class="whatif-clause">Clause ${p.clause_number}</span>
@@ -313,6 +336,9 @@ function exportSectionHtml(): string {
         <button class="cta-ghost" id="export-qr">${iconRef("qr")}<span>Show QR</span></button>
       </div>
       <div class="export-deeper">
+        <button class="cta-ghost" id="go-genie">
+          <span>Ask the lawbook · Genie chat</span>
+        </button>
         <button class="cta-ghost" id="go-dashboard">
           <span>See the systemic view · NGO Dashboard</span>
         </button>
@@ -355,8 +381,9 @@ function verdictLabel(before: number, after: number): string {
   return "Counter-intuitive: amended contract scored worse.";
 }
 
-function escape(s: string): string {
-  return s
+function escape(s: any): string {
+  if (s === null || s === undefined) return "";
+  return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
