@@ -1,0 +1,25 @@
+{
+  "name": "panel-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Panel — cinematic v2. Multi-agent rights advisor for APJ migrant workers.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0",
+    "jspdf": "^4.2.1",
+    "qrcode": "^1.5.4",
+    "three": "^0.184.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6",
+    "@types/three": "^0.184.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
+  }
+}
