@@ -1,80 +1,71 @@
-# Panel — v2 (cinematic)
+# Panel — web/ (cinematic frontend)
 
-A vanilla TypeScript + Three.js + GSAP rewrite of [Panel](../panel/) for the demo / portfolio
-register. Same agent backend, completely different presentation.
+The cinematic frontend for [Panel](../). Vanilla TypeScript + Three.js + GSAP — no framework runtime.
 
-> The Streamlit version is the hackathon submission. This is what Panel looks
-> like when there are no framework constraints — the version we'd put in front
-> of an ILO partner or an actual migrant worker.
+This is what's deployed on Databricks Apps (built into `../app/static/` and served by the FastAPI backend in `../app/`).
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| Build | Vite 5 |
+| Build | Vite 8 |
 | Language | TypeScript 5 (strict) |
-| 3D / WebGL | Three.js 0.169 — custom shaders |
+| 3D / WebGL | Three.js — custom shaders |
 | Animation | GSAP 3 |
 | Typography | Inter + Instrument Serif + JetBrains Mono (Google Fonts) |
-| State | Module-level signals (~30 lines, when needed) |
-| Backend | reuses the FastAPI-wrapped agents from `../panel/app/` |
-| Deploy | Static bundle → Cloudflare Pages OR served by FastAPI from Databricks Apps |
-
-Total bundle target: **~200KB gzipped**. No framework runtime.
+| State | Module-level signals (`src/state.ts`) |
+| Backend | FastAPI-wrapped agents from `../app/` |
+| Deploy | Static bundle → `../app/static/` → Databricks Apps |
 
 ## Run
 
 ```bash
-cd panel-v2
+cd web
 npm install
 npm run dev
 ```
 
-Opens at http://127.0.0.1:5173.
+Opens at http://127.0.0.1:5173. The dev server proxies API calls to a local FastAPI (run `uvicorn api.server:app --reload` from `../app/`).
 
-## Status
+## Build + deploy
 
-- [x] **Cold open** — fluid WebGL background, letter-by-letter title reveal,
-      subtitle typewriter, stat counter tweens, magnetic CTA
-- [ ] Intake — PDF fly-in + scanning laser
-- [ ] Deliberation — 6 agent panes in a 3D semicircle
-- [ ] Disagreement reel — quote-collision sequence
-- [ ] Recommendation — handwriting reveal of the worker's letter
-- [ ] Aggregate — R3F globe + corridor arcs
+From the repo root:
 
-## Architecture sketch
+```bash
+./scripts/build_and_deploy.sh
+```
+
+That runs `vite build` here, copies `dist/` into `../app/static/`, validates the Databricks Asset Bundle, deploys to the workspace, and restarts the app.
+
+## Scenes
+
+Full end-to-end flow, in router order:
 
 ```
-src/
-├── main.ts                  entry
-├── style.css                design system (tokens + base + cold-open)
-├── three/
-│   ├── fluid-background.ts  full-bleed WebGL fluid noise
-│   ├── agent-card.ts        3D pane primitive (next)
-│   └── camera-rig.ts        scene-to-scene camera choreography (next)
-├── scenes/
-│   ├── cold-open.ts         ✓
-│   ├── intake.ts            (next)
-│   ├── deliberation.ts      (next)
-│   ├── reel.ts              (next)
-│   └── recommendation.ts    (next)
-├── ui/
-│   └── overlays.ts          HTML overlay components (next)
-└── api/
-    └── panel.ts             talks to FastAPI backend (next)
+src/scenes/
+├── cold-open.ts        Fluid WebGL background + title reveal + magnetic CTA
+├── intake.ts           Sample picker + PDF/paste, language + situation
+├── deliberation.ts     Six agent panes — parallel "thinking" + verdict stamps
+├── reel.ts             Disagreement-tension hero cards
+├── rebuttals.ts        Round-2 agent push-back/extend cards
+├── negotiation.ts      L1 + EN coaching script, six questions, red flags
+├── recommendation.ts   Tagalog letter + 4-phase checklist + what-if simulator
+├── genie.ts            NL→SQL multi-turn chat against the Databricks Genie Space
+├── dashboard.ts        NGO aggregate heatmap + KPIs
+└── router.ts           Scene-id state machine + crossfade transitions
 ```
+
+## Performance budget
+
+- Initial paint: < 100ms
+- Time to interactive: < 500ms
+- Frame budget during scenes: 16ms (60fps), gracefully degrades
+- Bundle: ~430KB gzipped (three + html2canvas + jspdf dominate)
+- Respects `prefers-reduced-motion: reduce` — static fallback
 
 ## Why vanilla, not Next.js
 
 - One experience, no routing. No SEO target.
 - React reconciliation fights animation loops.
 - ~150KB lighter than Next.js + R3F equivalent.
-- Static deploy works on Cloudflare Pages with `cf-deploy`.
-
-## Performance budget
-
-- Initial paint: < 100ms
-- Time to interactive: < 500ms
-- Frame budget during scenes: 16ms (60fps), gracefully degrades to 30fps
-- Total JS: < 250KB gzipped
-- Respects `prefers-reduced-motion: reduce` — full static fallback
+- Static deploy is one `cp -r dist/. ../app/static/`.

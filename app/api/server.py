@@ -48,9 +48,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173",
-                   "https://panel-v2-nvg.pages.dev",
-                   "https://panel-v2.pages.dev"],
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -154,9 +152,9 @@ def run(req: PanelRunRequest) -> JSONResponse:
     return JSONResponse(result)
 
 
-# Serve the bundled panel-v2 static site from /
+# Serve the bundled web/ static site from /
 _STATIC = _APP_ROOT / "static"
-_DEV_STATIC = _APP_ROOT.parent.parent / "panel-v2" / "dist"
+_DEV_STATIC = _APP_ROOT.parent.parent / "web" / "dist"
 _BUNDLE = _STATIC if _STATIC.exists() else _DEV_STATIC
 
 if _BUNDLE.exists():
@@ -166,6 +164,6 @@ else:
     def root_placeholder() -> dict:
         return {
             "message": "Panel API running.",
-            "frontend": "Run scripts/build_and_deploy.sh to bundle panel-v2 into app/static/",
+            "frontend": "Run scripts/build_and_deploy.sh to bundle web/ into app/static/",
             "endpoints": ["/api/health", "/api/samples", "POST /api/panel/run"],
         }

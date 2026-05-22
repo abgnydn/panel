@@ -1,9 +1,9 @@
 {
-  "name": "panel-v2",
+  "name": "panel-web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Panel — cinematic v2. Multi-agent rights advisor for APJ migrant workers.",
+  "description": "Panel — cinematic frontend. Multi-agent rights advisor for APJ migrant workers.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

@@ -1,5 +1,5 @@
 # Panel — Databricks Asset Bundle
-# Deploys the FastAPI server + the bundled panel-v2 static frontend
+# Deploys the FastAPI server + the bundled web/ static frontend
 # as a single Databricks App.
 
 bundle:

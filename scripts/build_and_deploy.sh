@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Panel — build the v2 frontend, copy into the FastAPI app dir,
+# Panel — build the web/ frontend, copy into the FastAPI app dir,
 # and deploy as a Databricks App via Asset Bundle.
 set -euo pipefail
 
-PANEL=/Users/ahmetbarisgunaydin2/panel
-V2=/Users/ahmetbarisgunaydin2/panel-v2
+PANEL="$(cd "$(dirname "$0")/.." && pwd)"
+WEB="$PANEL/web"
 
-echo "── build panel-v2 ──"
-cd "$V2" && npm run build
+echo "── build web/ ──"
+cd "$WEB" && npm run build
 
 echo "── copy dist → app/static ──"
 rm -rf "$PANEL/app/static"
 mkdir -p "$PANEL/app/static"
-cp -r "$V2/dist/." "$PANEL/app/static/"
+cp -r "$WEB/dist/." "$PANEL/app/static/"
 echo "  bundled $(find "$PANEL/app/static" -type f | wc -l) files into app/static"
 
 echo "── databricks bundle validate ──"
