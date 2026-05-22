@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Panel — Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; }
+  body {
+    background: radial-gradient(ellipse at top, #fafaf9 0%, #f1f1ef 100%);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #1a1a1a;
+    display: grid;
+    grid-template-rows: 120px 1fr 80px;
+  }
+
+  header {
+    padding: 40px 80px 0 80px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid #e5e5e2;
+  }
+  .brand { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+  .brand .accent { color: #FF3621; }
+  .subtitle { font-size: 18px; font-weight: 500; color: #6b6b66; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 80px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  object.diagram, img.diagram {
+    height: 820px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 24px rgba(0,0,0,0.08));
+  }
+
+  footer {
+    padding: 0 80px 30px 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #6b6b66;
+  }
+  .stack {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .stack span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stack .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #FF3621;
+  }
+  .stack .dot.lake { background: #336791; }
+  .stack .dot.genie { background: #4F46E5; }
+  .stack .dot.uc { background: #6b6b66; }
+  .stack .dot.mosaic { background: #991b1b; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">Panel <span class="accent">·</span> Architecture</div>
+    <div class="subtitle">Marketing Delphi · Singapore</div>
+  </header>
+
+  <main>
+    <object class="diagram" type="image/svg+xml" data="architecture.svg" aria-label="Panel architecture diagram"></object>
+  </main>
+
+  <footer>
+    <div class="stack">
+      <span><span class="dot"></span>Databricks Apps</span>
+      <span><span class="dot mosaic"></span>Mosaic AI Model Serving</span>
+      <span><span class="dot lake"></span>Lakebase Postgres</span>
+      <span><span class="dot genie"></span>Genie Space</span>
+      <span><span class="dot uc"></span>Unity Catalog</span>
+    </div>
+    <div>panel-7474659131504222.aws.databricksapps.com</div>
+  </footer>
+</body>
+</html>

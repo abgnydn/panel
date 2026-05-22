@@ -1,0 +1,36 @@
+flowchart TB
+    Worker[/"Migrant worker<br/>mobile, any APJ language"/]:::worker
+
+    Worker -->|"HTTPS"| Apps
+
+    subgraph Apps["<b>Databricks Apps</b>"]
+        direction TB
+        FE["<b>Frontend</b><br/>vanilla TS · Vite 8 · Three.js · GSAP<br/>8 cinematic scenes"]:::front
+        BE["<b>FastAPI backend</b><br/>uvicorn · provider abstraction<br/>/api/panel/run · /api/genie/query"]:::back
+        FE <-->|"same origin"| BE
+    end
+
+    BE --> Moderator{{"<b>Moderator</b><br/>ThreadPoolExecutor · 6-way parallel<br/>Round 2 rebuttal · disagreement detection"}}:::mod
+
+    Moderator --> Lawyer["Lawyer"]:::agent
+    Moderator --> Translator["Translator"]:::agent
+    Moderator --> Regulator["Regulator"]:::agent
+    Moderator --> PeerAdvocate["Peer Advocate"]:::agent
+    Moderator --> Triage["Triage"]:::agent
+    Moderator --> Negotiator["Negotiator"]:::agent
+
+    Lawyer & Translator & Regulator & PeerAdvocate & Triage & Negotiator --> Mosaic["<b>Mosaic AI Model Serving</b><br/>qwen3-next-80b · llama-3-3-70b"]:::mosaic
+
+    BE -.->|"sessions · recommendations · audit"| Lakebase[("<b>Lakebase</b><br/>Postgres 16 OLTP")]:::lake
+    BE -.->|"NL question · multi-turn"| Genie["<b>Genie Space</b><br/>NL → SQL · AI follow-ups"]:::genie
+    Genie --> UC[("<b>Unity Catalog</b><br/>panel.main<br/>labor_codes · ilo_standards<br/>case_archive · embassy_directory")]:::uc
+
+    classDef worker fill:#fef3c7,stroke:#92400e,stroke-width:2px,color:#451a03
+    classDef front fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
+    classDef back fill:#ede9fe,stroke:#5b21b6,color:#3730a3
+    classDef mod fill:#fce7f3,stroke:#9d174d,stroke-width:2px,color:#831843
+    classDef agent fill:#f0fdf4,stroke:#166534,color:#14532d
+    classDef mosaic fill:#fef2f2,stroke:#991b1b,color:#7f1d1d
+    classDef lake fill:#eff6ff,stroke:#1e3a8a,color:#1e3a8a
+    classDef genie fill:#f5f3ff,stroke:#5b21b6,color:#4c1d95
+    classDef uc fill:#f1f5f9,stroke:#334155,color:#0f172a
