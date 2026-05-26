@@ -25,8 +25,9 @@ ROLE_TAGLINES = {
 }
 
 SYSTEM_TMPL = """You are the {tagline} on a panel reviewing a migrant worker's employment contract.
+Your canonical name on this panel is "{name}".
 
-Round 1 has just completed. You see compact summaries of what the other four
+Round 1 has just completed. You see compact summaries of what the other five
 panel members said. Your job in Round 2 is to give ONE short reaction — 2 to 3
 sentences — that either:
   - Pushes back on a specific claim from another panelist
@@ -38,11 +39,14 @@ do not adopt another agent's expertise.
 
 Output STRICT JSON:
 {{
-  "agent": "<your name>",
+  "agent": "{name}",
   "rebuttal": "<2-3 sentence response>",
-  "responds_to": "<which agent you primarily address>",
+  "responds_to": "<a DIFFERENT agent's canonical name — must NOT be \\"{name}\\">",
   "stance": "concede" | "push_back" | "extend"
 }}
+
+Valid values for "responds_to": one of {other_names} — pick exactly one.
+Never echo "{name}" back as responds_to; you cannot rebut yourself.
 
 Output ONLY the JSON object."""
 
@@ -86,13 +90,32 @@ def run_rebuttals(
         others = {k: v for k, v in round1_outputs.items() if k != name}
         others_summary = _other_agents_summary(others)
         own_summary = round1_outputs.get(name, {}).get("verdict_summary", "")
-        system = SYSTEM_TMPL.format(tagline=ROLE_TAGLINES[name])
+        other_names = [n for n in agent_names if n != name]
+        system = SYSTEM_TMPL.format(
+            tagline=ROLE_TAGLINES[name],
+            name=name,
+            other_names=", ".join(f'"{n}"' for n in other_names),
+        )
         user = (
             f"YOUR ROUND-1 SUMMARY: {own_summary}\n\n"
             f"OTHER PANELISTS' ROUND-1 OUTPUTS:\n{others_summary}\n\n"
             "Give your Round 2 reaction. One agent to respond to. 2-3 sentences."
         )
         return lambda: ask_agent(system, user, max_tokens=600, model="haiku")
+
+    def _coerce_responds_to(name: str, parsed: dict) -> dict:
+        """Guarantee responds_to is a different agent than the speaker."""
+        others = [n for n in agent_names if n != name]
+        target = parsed.get("responds_to")
+        if not isinstance(target, str) or target.strip().lower() == name:
+            # Pick the agent named in the rebuttal text, if any; else fall back.
+            text = (parsed.get("rebuttal") or "").lower()
+            picked = next((n for n in others if n in text), None) or others[0]
+            parsed["responds_to"] = picked
+            parsed["_responds_to_coerced"] = True
+        # Always overwrite agent field with the canonical name.
+        parsed["agent"] = name
+        return parsed
 
     rebuttals: dict[str, dict] = {}
     with ThreadPoolExecutor(max_workers=5) as pool:
@@ -103,9 +126,9 @@ def run_rebuttals(
             try:
                 result = fut.result()
                 result.output["_latency_ms"] = result.latency_ms
-                rebuttals[name] = result.output
+                rebuttals[name] = _coerce_responds_to(name, result.output)
                 if on_agent_done:
-                    on_agent_done(name, result.output)
+                    on_agent_done(name, rebuttals[name])
             except Exception as exc:
                 rebuttals[name] = {
                     "agent": name,
