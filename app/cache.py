@@ -24,7 +24,7 @@ def disabled() -> bool:
 
 # Bump SCHEMA_VERSION whenever the moderator response shape changes so stale
 # entries from older deploys don't get served to a frontend that expects new fields.
-SCHEMA_VERSION = "v4"
+SCHEMA_VERSION = "v5"
 
 
 def key(contract_text: str, situation: str, destination: str,
